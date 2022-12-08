@@ -1,5 +1,5 @@
 module "account" {
-  source = "../terraform/_account"
+  source = "./modules/_account"
 
   users                      = local.config.users
   buckets                    = local.config.buckets

@@ -9,10 +9,8 @@ jobs:
     strategy:
       matrix:
         path:
-          - modules/
-          - terraform/_account
-          - terraform/_common
-          
+          - /
+
     permissions: write-all
     steps:
     - uses: dasmeta/reusable-actions-workflows/terraform-test@main
