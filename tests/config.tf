@@ -22,6 +22,7 @@ locals {
       users = concat(local.common_users, [
 
       ])
+      name = "test-account-module"
       buckets = concat(local.common_buckets, [
         {
           name = "test-account-module"

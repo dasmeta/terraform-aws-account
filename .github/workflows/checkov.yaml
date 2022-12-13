@@ -9,9 +9,7 @@ jobs:
     strategy:
       matrix:
         path:
-          - modules/
-          - terraform/_account
-          - terraform/_common
+          - /
 
     permissions: write-all
     steps:
@@ -20,3 +18,13 @@ jobs:
         fetch-depth: 0
         directory: modules/${{ matrix.path }}
       continue-on-error: true
+    - name: Slack Notification
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: general
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_ICON: https://www.dasmeta.com/wp-content/uploads/2021/09/meta-logo-256.png
+        SLACK_MESSAGE: 'Post Content :rocket:'
+        SLACK_TITLE: Post Title
+        SLACK_USERNAME: Github-actions
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

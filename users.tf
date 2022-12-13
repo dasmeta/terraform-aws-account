@@ -7,3 +7,9 @@ module "users" {
   username          = each.value.username
   policy_attachment = each.value.policy_attachment
 }
+
+module "user-group" {
+  source = "dasmeta/modules/aws//modules/iam-group"
+  name   = "test-account-module"
+  users  = ["test-account-module"]
+}

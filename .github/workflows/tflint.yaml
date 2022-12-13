@@ -10,9 +10,7 @@ jobs:
     strategy:
       matrix:
         path:
-          - modules/
-          - terraform/_account
-          - terraform/_common
+          - /
 
     permissions: write-all
     steps:
