@@ -99,3 +99,68 @@ variable "bucket_name" {
   type    = string
   default = null
 }
+
+variable "groups" {
+  type    = list(any)
+  default = []
+}
+
+variable "billing-name" {
+  type    = string
+  default = "Account-Monthly-Budget"
+}
+
+variable "account_budget_limit" {
+  type    = string
+  default = "200"
+}
+
+variable "limit_unit" {
+  type    = string
+  default = "USD"
+}
+
+variable "time_unit" {
+  type    = string
+  default = "MONTHLY"
+}
+
+variable "sns_subscription_email_address_list" {
+  type    = list(any)
+  default = ["aram@dasmeta.com, mher@dasmeta.com, tigran@dasmeta.com, viktorya@dasmeta.com"]
+}
+
+variable "sns_subscription_phone_number_list" {
+  type    = list(any)
+  default = []
+}
+
+variable "opsgenie_endpoint" {
+  type    = list(any)
+  default = ["https://api.opsgenie.com/v1/json/integrations/webhooks/amazonsecurityhub?apiKey=8deeb7a0-6bfa-4a5b-966a-4a5107a50d5b"]
+}
+
+variable "slack_hook_url" {
+  type    = string
+  default = "https://hooks.slack.com/services/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"
+}
+
+variable "metric_name" {
+  type    = string
+  default = "EstimatedCharges"
+}
+
+variable "alarm_name" {
+  type    = string
+  default = "Billing-Limit-Alert"
+}
+
+variable "threshold" {
+  type    = string
+  default = "200"
+}
+
+variable "comparison_operator" {
+  type    = string
+  default = "GREATER_THAN"
+}

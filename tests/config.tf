@@ -1,11 +1,12 @@
 locals {
   common_users = [
     {
-      username = "test-account-module"
+      username = "test-user"
       policy_attachment = [
-        "arn:aws:iam::aws:policy/ReadOnlyAccess",
+        "arn:aws:iam::aws:policy/AdministratorAccess",
         "arn:aws:iam::aws:policy/IAMUserChangePassword"
       ]
+      groups = ["Administrators"]
     }
   ]
   common_buckets = [
@@ -18,14 +19,14 @@ locals {
 
   accounts = {
     dasmeta = {
-      ecrs = ["test-account-module"]
+      ecrs = ["dasmeta-ecr"]
       users = concat(local.common_users, [
 
       ])
-      name = "test-account-module"
+      name = "dasmeta"
       buckets = concat(local.common_buckets, [
         {
-          name = "test-account-module"
+          name = "dasmeta"
           # acl    = "private"
           ignore_public_acls      = true
           restrict_public_buckets = true
