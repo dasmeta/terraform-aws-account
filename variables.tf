@@ -127,7 +127,7 @@ variable "time_unit" {
 
 variable "sns_subscription_email_address_list" {
   type    = list(any)
-  default = ["aram@dasmeta.com, mher@dasmeta.com, tigran@dasmeta.com, viktorya@dasmeta.com"]
+  default = []
 }
 
 variable "sns_subscription_phone_number_list" {
@@ -137,12 +137,12 @@ variable "sns_subscription_phone_number_list" {
 
 variable "opsgenie_endpoint" {
   type    = list(any)
-  default = ["https://api.opsgenie.com/v1/json/integrations/webhooks/amazonsecurityhub?apiKey=8deeb7a0-6bfa-4a5b-966a-4a5107a50d5b"]
+  default = []
 }
 
 variable "slack_hook_url" {
   type    = string
-  default = "https://hooks.slack.com/services/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"
+  default = ""
 }
 
 variable "metric_name" {
