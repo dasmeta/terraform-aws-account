@@ -9,12 +9,12 @@ jobs:
     strategy:
       matrix:
         path:
-          - /
+          - ./
 
     permissions: write-all
     steps:
-    - uses: dasmeta/reusable-actions-workflows/checkov@main
+    - uses: dasmeta/reusable-actions-workflows/checkov@4.1.0
       with:
         fetch-depth: 0
-        directory: modules/${{ matrix.path }}
+        directory: ${{ matrix.path }}
       continue-on-error: true

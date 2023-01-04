@@ -1,18 +1,17 @@
 module "monitoring_billing" {
   source  = "dasmeta/monitoring/aws//modules/billing"
-  version = "0.2.1"
+  version = "1.3.8"
 
-  name                 = var.billing-name
-  account_budget_limit = var.account_budget_limit
-  limit_unit           = var.limit_unit
-  time_unit            = var.time_unit
+  count = var.billing_alarm.enabled ? 1 : 0
 
-  sns_subscription_email_address_list = var.sns_subscription_email_address_list
-  sns_subscription_phone_number_list  = var.sns_subscription_phone_number_list
-  opsgenie_endpoint                   = var.opsgenie_endpoint
-  slack_hook_url                      = var.slack_hook_url
-  metric_name                         = var.metric_name
-  alarm_name                          = var.alarm_name
-  threshold                           = var.threshold
-  comparison_operator                 = var.comparison_operator
+  name                = var.billing_alarm.name
+  limit_amount        = var.billing_alarm.limit_amount
+  limit_unit          = var.billing_alarm.limit_unit
+  time_unit           = var.billing_alarm.time_unit
+  sns_subscription    = var.billing_alarm.sns_subscription
+  metric_name         = var.billing_alarm.metric_name
+  alarm_name          = var.billing_alarm.alarm_name
+  threshold           = var.billing_alarm.threshold
+  threshold_type      = var.billing_alarm.threshold_type
+  comparison_operator = var.billing_alarm.comparison_operator
 }

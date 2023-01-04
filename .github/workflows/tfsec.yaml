@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-    - uses: dasmeta/reusable-actions-workflows/tfsec@main
+    - uses: dasmeta/reusable-actions-workflows/tfsec@4.1.0
       with:
         fetch-depth: 0
     continue-on-error: true

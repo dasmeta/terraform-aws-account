@@ -1,22 +1,25 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  s3_bucket_name = "${var.name}-cloud-trail-bucket"
+  s3_bucket_name = "${var.cloudtrail.name}-cloud-trail-bucket"
 }
+
 resource "aws_cloudtrail" "cloudtrail" {
-  name                          = var.name
-  s3_bucket_name                = var.create_s3_bucket ? local.s3_bucket_name : var.bucket_name
-  include_global_service_events = var.include_global_service_events
-  enable_log_file_validation    = var.enable_log_file_validation
-  is_organization_trail         = var.is_organization_trail
-  is_multi_region_trail         = var.is_multi_region_trail
-  cloud_watch_logs_group_arn    = var.cloud_watch_logs_group_arn
-  cloud_watch_logs_role_arn     = var.cloud_watch_logs_role_arn
-  enable_logging                = var.enable_logging
-  sns_topic_name                = var.sns_topic_name
+  count = var.cloudtrail.enabled ? 1 : 0
+
+  name                          = var.cloudtrail.name
+  s3_bucket_name                = var.cloudtrail.bucket_name != "" ? var.cloudtrail.bucket_name : local.s3_bucket_name
+  include_global_service_events = var.cloudtrail.include_global_service_events
+  enable_log_file_validation    = var.cloudtrail.enable_log_file_validation
+  is_organization_trail         = var.cloudtrail.is_organization_trail
+  is_multi_region_trail         = var.cloudtrail.is_multi_region_trail
+  cloud_watch_logs_group_arn    = var.cloudtrail.cloud_watch_logs_group_arn
+  cloud_watch_logs_role_arn     = var.cloudtrail.cloud_watch_logs_role_arn
+  enable_logging                = var.cloudtrail.enable_logging
+  sns_topic_name                = var.cloudtrail.sns_topic_name
 
   dynamic "event_selector" {
-    for_each = var.event_selector
+    for_each = var.cloudtrail.event_selector
     content {
       include_management_events = lookup(event_selector.value, "include_management_events", null)
       read_write_type           = lookup(event_selector.value, "read_write_type", null)
@@ -33,13 +36,15 @@ resource "aws_cloudtrail" "cloudtrail" {
 }
 
 resource "aws_s3_bucket" "s3" {
-  count         = var.create_s3_bucket ? 1 : 0
+  count = var.cloudtrail.bucket_name != "" ? 0 : 1
+
   bucket        = local.s3_bucket_name
   force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "s3" {
-  count  = var.create_s3_bucket ? 1 : 0
+  count = var.cloudtrail.bucket_name != "" ? 0 : 1
+
   bucket = aws_s3_bucket.s3[0].id
   policy = <<POLICY
 {
