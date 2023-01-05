@@ -13,7 +13,7 @@ variable "groups" {
     name                              = string
     custom_group_policies             = optional(list(map(string)), [])
     custom_group_policy_arns          = optional(list(string), [])
-    attach_iam_self_management_policy = optional(bool, true)
+    attach_iam_self_management_policy = optional(bool, false)
     users                             = optional(list(string), [])
   }))
   default = []
@@ -21,11 +21,12 @@ variable "groups" {
 
 variable "enforce_mfa" {
   type = object({
-    group_name                      = optional(string, "enforce-mfa")
-    policy_name                     = optional(string, "mfa-enforce-policy")
-    manage_own_signing_certificates = optional(bool, true)
-    manage_own_ssh_public_keys      = optional(bool, true)
-    manage_own_git_credentials      = optional(bool, true)
+    group_name                        = optional(string, "enforce-mfa")
+    policy_name                       = optional(string, "mfa-enforce-policy")
+    manage_own_signing_certificates   = optional(bool, true)
+    manage_own_ssh_public_keys        = optional(bool, true)
+    manage_own_git_credentials        = optional(bool, true)
+    attach_iam_self_management_policy = optional(bool, false)
   })
   default     = {}
   description = "MFA related configs, set the name for enforce MFA IAM user group value to null if you want this group to not be created"

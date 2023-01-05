@@ -28,9 +28,10 @@ module "enforce_mfa_group" {
 
   count = var.enforce_mfa.group_name == null ? 0 : 1
 
-  name           = var.enforce_mfa.group_name
-  aws_account_id = data.aws_caller_identity.current.id
-  group_users    = [for user in var.users : user.username if user.enforce_mfa]
+  name                              = var.enforce_mfa.group_name
+  aws_account_id                    = data.aws_caller_identity.current.id
+  group_users                       = [for user in var.users : user.username if user.enforce_mfa]
+  attach_iam_self_management_policy = var.enforce_mfa.attach_iam_self_management_policy
 }
 
 module "enforce_mfa" {
