@@ -13,7 +13,7 @@ jobs:
 
     permissions: write-all
     steps:
-    - uses: dasmeta/reusable-actions-workflows/checkov@4.1.0
+    - uses: dasmeta/reusable-actions-workflows/checkov@4.1.1
       with:
         fetch-depth: 0
         directory: ${{ matrix.path }}

@@ -21,8 +21,17 @@ module "this" {
 
   buckets = [{
     name = "test-states-bucket"
-    versioning = {
+  }]
+
+  cloudtrail = {
+    enabled = true
+  }
+
+  alarm_actions = {
+    enabled = true
+
+    billing_alarm = {
       enabled = true
     }
-  }]
+  }
 }

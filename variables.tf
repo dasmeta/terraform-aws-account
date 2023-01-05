@@ -39,7 +39,7 @@ variable "buckets" {
     restrict_public_buckets = optional(bool, true)
     block_public_acls       = optional(bool, true)
     block_public_policy     = optional(bool, true)
-    versioning              = optional(map(string), {})
+    versioning              = optional(map(string), { enabled = true })
     website                 = optional(map(string), {})
     create_index_html       = optional(bool, false)
     create_iam_user         = optional(bool, false)
@@ -76,32 +76,49 @@ variable "cloudtrail" {
   description = "Cloudtrail configuration"
 }
 
-variable "billing_alarm" {
+variable "alarm_actions" {
   type = object({
-    enabled             = optional(bool, false)
-    name                = optional(string, "Account-Monthly-Budget")
-    limit_amount        = optional(string, "200")
-    limit_unit          = optional(string, "USD")
-    time_unit           = optional(string, "MONTHLY")
-    metric_name         = optional(string, "EstimatedCharges")
-    alarm_name          = optional(string, "Billing-Limit-Alert")
-    threshold           = optional(string, "200")
-    threshold_type      = optional(string, "PERCENTAGE")
-    comparison_operator = optional(string, "GREATER_THAN")
+    enabled         = optional(bool, false)
+    topic_name      = optional(string, "account-alarms-handling")
+    email_addresses = optional(list(string), [])
+    phone_numbers   = optional(list(string), [])
+    web_endpoints   = optional(list(string), [])
+    slack_webhooks = optional(list(object({
+      hook_url = string
+      channel  = string
+      username = string
+    })), [])
+    servicenow_webhooks = optional(list(object({
+      domain = string
+      path   = string
+      user   = string
+      pass   = string
+    })), [])
+    billing_alarm = optional(object({ # Allows to setup billing (cost exceeded) alarm for aws account, NOTE: you have to at first enable 'alarm_actions' and then enable this
+      enabled             = optional(bool, false)
+      name                = optional(string, "Account-Monthly-Budget")
+      limit_amount        = optional(string, "200")
+      limit_unit          = optional(string, "USD")
+      time_unit           = optional(string, "MONTHLY")
+      threshold           = optional(string, "200")
+      threshold_type      = optional(string, "PERCENTAGE")
+      comparison_operator = optional(string, "GREATER_THAN")
 
-    sns_subscription = optional(object({
-      sns_subscription_email_address_list    = optional(list(string), [])
-      sns_subscription_phone_number_list     = optional(list(string), [])
-      sms_message_body                       = optional(string, "")
-      slack_webhook_url                      = optional(string, "")
-      slack_channel                          = optional(string, "")
-      slack_username                         = optional(string, "")
-      cloudwatch_log_group_retention_in_days = optional(number, 7)
-      opsgenie_endpoint                      = optional(list(string), [])
-    }), null)
+      sns_subscription = optional(object({
+        sns_subscription_email_address_list    = optional(list(string), [])
+        sns_subscription_phone_number_list     = optional(list(string), [])
+        sms_message_body                       = optional(string, "")
+        slack_webhook_url                      = optional(string, "")
+        slack_channel                          = optional(string, "")
+        slack_username                         = optional(string, "")
+        cloudwatch_log_group_retention_in_days = optional(number, 7)
+        opsgenie_endpoint                      = optional(list(string), [])
+      }), null)
+    }), { enabled : false })
   })
-  default     = { enabled : false }
-  description = "Allows to setup billing (cost exceeded) alarm for aws account"
+
+  default     = { enabled = false, billing_alarm = { enabled : false } }
+  description = "Whether to enable/create regional(TODO: add also us-east-1 region alarm also for health-check alarms) SNS topic/subscribers"
 }
 
 variable "create_cloudwatch_log_role" {
