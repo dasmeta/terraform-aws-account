@@ -16,5 +16,5 @@ module "cloudtrail" {
   sns_topic_name                = var.cloudtrail.sns_topic_name
   event_selector                = var.cloudtrail.event_selector
   enable_cloudwatch_logs        = var.cloudtrail.enable_cloudwatch_logs
-  cloud_watch_logs_group_name   = var.cloudtrail.cloud_watch_logs_group_name
+  cloud_watch_logs_group_name   = "${var.cloudtrail.name}-cloudtrail-logs"
 }
