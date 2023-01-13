@@ -53,6 +53,7 @@ variable "buckets" {
 variable "cloudtrail" {
   type = object({
     enabled                       = optional(bool, false)
+    enable_cloudwatch_logs        = optional(bool, false)
     name                          = optional(string, "audit") # Name of CloudTrail
     bucket_name                   = optional(string, "")      # Whether to create new fresh bucket or use existing one, if set non empty it will use existing one with provided name
     include_global_service_events = optional(bool, true)      # Specifies whether the trail is publishing events from global services such as IAM to the log files
@@ -126,4 +127,19 @@ variable "create_cloudwatch_log_role" {
   type        = bool
   default     = false
   description = "This is an account level configuration which creates IAM role with policy allowing cloudwatch sync/push logs into cloudwatch"
+}
+
+variable "log_metrics" {
+  type = object({
+    enabled = optional(bool, false)
+    metrics_patterns = optional(list(object({
+      name       = optional(string, "ERROR")
+      pattern    = optional(string, "ERROR")
+      unit       = optional(string, "None")
+      dimensions = optional(map(string), {})
+    })), [])
+    metrics_namespace = optional(string, "LogBasedMetrics")
+  })
+  default     = { enabled : false }
+  description = "Provide CloudWatch Log Metric filters"
 }
