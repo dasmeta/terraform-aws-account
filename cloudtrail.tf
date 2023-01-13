@@ -1,7 +1,6 @@
 module "cloudtrail" {
-  source = "/Users/Vika/Documents/dasmeta-modules/terraform-aws-modules/modules/cloudtrail"
-  # source  = "dasmeta/modules/aws//modules/cloudtrail/"
-  # version = "1.7.0"
+  source  = "dasmeta/modules/aws//modules/cloudtrail/"
+  version = "1.8.0"
 
   count = var.cloudtrail.enabled ? 1 : 0
 
