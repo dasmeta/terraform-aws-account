@@ -73,6 +73,7 @@ variable "cloudtrail" {
         values = list(string)
       }))
     })), [])
+    insight_selectors = optional(list(string), [])
   })
   default     = { enabled : false }
   description = "Cloudtrail configuration"
