@@ -1,6 +1,7 @@
 module "cloudtrail" {
-  source  = "dasmeta/modules/aws//modules/cloudtrail/"
-  version = "1.7.0"
+  source = "/Users/Vika/Documents/dasmeta-modules/terraform-aws-modules/modules/cloudtrail"
+  # source  = "dasmeta/modules/aws//modules/cloudtrail/"
+  # version = "1.7.0"
 
   count = var.cloudtrail.enabled ? 1 : 0
 
@@ -15,6 +16,7 @@ module "cloudtrail" {
   enable_logging                = var.cloudtrail.enable_logging
   sns_topic_name                = var.cloudtrail.sns_topic_name
   event_selector                = var.cloudtrail.event_selector
+  insight_selector              = var.cloudtrail.insight_selector
   enable_cloudwatch_logs        = var.cloudtrail.enable_cloudwatch_logs
   cloud_watch_logs_group_name   = "${var.cloudtrail.name}-cloudtrail-logs"
 }
