@@ -5,7 +5,7 @@ module "log_metric_filter" {
   count = var.log_metrics.enabled ? 1 : 0
 
   metrics_patterns  = var.log_metrics.metrics_patterns
-  log_group_name    = var.cloudtrail.cloud_watch_logs_group_name
+  log_group_name    = "${var.cloudtrail.name}-cloudtrail-logs"
   metrics_namespace = var.log_metrics.metrics_namespace
 
   depends_on = [

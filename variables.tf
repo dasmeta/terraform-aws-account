@@ -54,7 +54,6 @@ variable "cloudtrail" {
   type = object({
     enabled                       = optional(bool, false)
     enable_cloudwatch_logs        = optional(bool, false)
-    cloud_watch_logs_group_name   = optional(string, "aws-cloudtrail-logs")
     name                          = optional(string, "audit") # Name of CloudTrail
     bucket_name                   = optional(string, "")      # Whether to create new fresh bucket or use existing one, if set non empty it will use existing one with provided name
     include_global_service_events = optional(bool, true)      # Specifies whether the trail is publishing events from global services such as IAM to the log files
