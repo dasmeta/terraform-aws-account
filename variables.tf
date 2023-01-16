@@ -124,6 +124,25 @@ variable "alarm_actions" {
   description = "Whether to enable/create regional(TODO: add also us-east-1 region alarm also for health-check alarms) SNS topic/subscribers"
 }
 
+variable "alerts" {
+  type = list(object({
+    name               = string
+    source             = string
+    filters            = map(any)
+    evaluation_periods = optional(number, 1)
+    statistic          = optional(string, "sum")
+    equation           = optional(string, "gte")
+    threshold          = optional(number, 1)
+    period             = optional(number, 300)
+    treat_missing_data = optional(string, null)
+    log_based_metric   = optional(bool, false)
+    anomaly_detection  = optional(bool, false)
+    account_id         = optional(string, null)
+  }))
+  description = "Allows to create standard and log based metric alarms"
+  default     = []
+}
+
 variable "create_cloudwatch_log_role" {
   type        = bool
   default     = false
@@ -138,7 +157,13 @@ variable "log_metrics" {
       pattern    = optional(string, "ERROR")
       unit       = optional(string, "None")
       dimensions = optional(map(string), {})
-    })), [])
+      })), [
+      {
+        name    = "Failed-login-attempts"
+        pattern = "{ $.eventName = ConsoleLogin } && ($.errorMessage = *Failed*)"
+      }
+      ]
+    )
     metrics_namespace = optional(string, "LogBasedMetrics")
   })
   default     = { enabled : false }
