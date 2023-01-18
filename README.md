@@ -29,7 +29,7 @@ module "account" {
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_buckets"></a> [buckets](#module\_buckets) | dasmeta/modules/aws//modules/s3 | 1.5.2 |
-| <a name="module_cloudtrail"></a> [cloudtrail](#module\_cloudtrail) | dasmeta/modules/aws//modules/cloudtrail/ | 1.8.1 |
+| <a name="module_cloudtrail"></a> [cloudtrail](#module\_cloudtrail) | dasmeta/modules/aws//modules/cloudtrail/ | 1.8.3 |
 | <a name="module_cloudwatch_alarm_actions"></a> [cloudwatch\_alarm\_actions](#module\_cloudwatch\_alarm\_actions) | dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions | 1.3.8 |
 | <a name="module_enforce_mfa"></a> [enforce\_mfa](#module\_enforce\_mfa) | terraform-module/enforce-mfa/aws | ~> 1.0 |
 | <a name="module_enforce_mfa_group"></a> [enforce\_mfa\_group](#module\_enforce\_mfa\_group) | terraform-aws-modules/iam/aws//modules/iam-group-with-policies | 5.9.2 |
