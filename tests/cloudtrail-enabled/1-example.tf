@@ -1,6 +1,10 @@
 module "this" {
   source = "../../"
 
+  alarm_actions = {
+    enabled = true
+  }
+
   cloudtrail = {
     enabled                = true
     enable_cloudwatch_logs = true
@@ -28,19 +32,6 @@ module "this" {
       }
     ]
     insight_selector = ["ApiCallRateInsight", "ApiErrorRateInsight"]
-  }
-
-  log_metrics = {
-    enabled = true
-    metrics_patterns = [
-      {
-        name    = "new-user-created"
-        pattern = "{ $.eventName = CreateUser }"
-      },
-      {
-        name    = "user-deleted"
-        pattern = "{ $.eventName = DeleteUser }"
-      }
-    ]
+    alerts_events    = ["iam-user-creation-or-deletion", "iam-role-creation-or-deletion"]
   }
 }

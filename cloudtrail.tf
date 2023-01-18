@@ -1,6 +1,6 @@
 module "cloudtrail" {
   source  = "dasmeta/modules/aws//modules/cloudtrail/"
-  version = "1.8.1"
+  version = "1.8.3"
 
   count = var.cloudtrail.enabled ? 1 : 0
 
@@ -18,4 +18,12 @@ module "cloudtrail" {
   insight_selectors             = var.cloudtrail.insight_selectors
   enable_cloudwatch_logs        = var.cloudtrail.enable_cloudwatch_logs
   cloud_watch_logs_group_name   = "${var.cloudtrail.name}-cloudtrail-logs"
+  alerts = {
+    sns_topic_name = var.alarm_actions.topic_name
+    events         = var.cloudtrail.alerts_events
+  }
+
+  depends_on = [
+    module.cloudwatch_alarm_actions
+  ]
 }
