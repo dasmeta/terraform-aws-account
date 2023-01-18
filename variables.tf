@@ -74,6 +74,7 @@ variable "cloudtrail" {
       }))
     })), [])
     insight_selectors = optional(list(string), [])
+    alerts_events     = optional(list(string), ["iam-user-creation-or-deletion"]) # Some possible values are: iam-user-creation-or-deletion, iam-role-creation-or-deletion, iam-policy-changes, s3-creation-or-deletion, root-account-usage, elastic-ip-association-and-disassociation and etc.
   })
   default     = { enabled : false }
   description = "Cloudtrail configuration"
@@ -128,19 +129,4 @@ variable "create_cloudwatch_log_role" {
   type        = bool
   default     = false
   description = "This is an account level configuration which creates IAM role with policy allowing cloudwatch sync/push logs into cloudwatch"
-}
-
-variable "log_metrics" {
-  type = object({
-    enabled = optional(bool, false)
-    metrics_patterns = optional(list(object({
-      name       = optional(string, "ERROR")
-      pattern    = optional(string, "ERROR")
-      unit       = optional(string, "None")
-      dimensions = optional(map(string), {})
-    })), [])
-    metrics_namespace = optional(string, "LogBasedMetrics")
-  })
-  default     = { enabled : false }
-  description = "Provide CloudWatch Log Metric filters"
 }
