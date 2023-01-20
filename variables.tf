@@ -52,19 +52,20 @@ variable "buckets" {
 
 variable "cloudtrail" {
   type = object({
-    enabled                       = optional(bool, false)
-    enable_cloudwatch_logs        = optional(bool, false)
-    name                          = optional(string, "audit") # Name of CloudTrail
-    bucket_name                   = optional(string, "")      # Whether to create new fresh bucket or use existing one, if set non empty it will use existing one with provided name
-    include_global_service_events = optional(bool, true)      # Specifies whether the trail is publishing events from global services such as IAM to the log files
-    enable_log_file_validation    = optional(bool, true)      # Specifies whether log file integrity validation is enabled. Creates signed digest for validated contents of logs
-    is_organization_trail         = optional(bool, true)      # The trail is an AWS Organizations trail
-    is_multi_region_trail         = optional(bool, true)      # Specifies whether the trail is created in the current region or in all regions
-    cloud_watch_logs_group_arn    = optional(string, "")      # Specifies a log group name using an Amazon Resource Name (ARN), that represents the log group to which CloudTrail logs will be delivered
-    cloud_watch_logs_role_arn     = optional(string, "")      # Specifies the role for the CloudWatch Logs endpoint to assume to write to a user’s log group
-    enable_logging                = optional(bool, true)      # Enable logging for the trail
-    sns_topic_name                = optional(string, null)    # Specifies the name of the Amazon SNS topic defined for notification of log file delivery
-    event_selector = optional(list(object({                   # Specifies an event selector for enabling data event logging. See: https://www.terraform.io/docs/providers/aws/r/cloudtrail.html for details on this variable
+    enabled                          = optional(bool, false)
+    enable_cloudwatch_logs           = optional(bool, false)
+    name                             = optional(string, "audit") # Name of CloudTrail
+    bucket_name                      = optional(string, "")      # Whether to create new fresh bucket or use existing one, if set non empty it will use existing one with provided name
+    include_global_service_events    = optional(bool, true)      # Specifies whether the trail is publishing events from global services such as IAM to the log files
+    enable_log_file_validation       = optional(bool, true)      # Specifies whether log file integrity validation is enabled. Creates signed digest for validated contents of logs
+    is_organization_trail            = optional(bool, true)      # The trail is an AWS Organizations trail
+    is_multi_region_trail            = optional(bool, true)      # Specifies whether the trail is created in the current region or in all regions
+    cloud_watch_logs_group_arn       = optional(string, "")      # Specifies a log group name using an Amazon Resource Name (ARN), that represents the log group to which CloudTrail logs will be delivered
+    cloud_watch_logs_role_arn        = optional(string, "")      # Specifies the role for the CloudWatch Logs endpoint to assume to write to a user’s log group
+    cloud_watch_logs_group_retention = optional(number, 90)      # Specifies the number of days you want to retain log events in the specified log group.
+    enable_logging                   = optional(bool, true)      # Enable logging for the trail
+    sns_topic_name                   = optional(string, null)    # Specifies the name of the Amazon SNS topic defined for notification of log file delivery
+    event_selector = optional(list(object({                      # Specifies an event selector for enabling data event logging. See: https://www.terraform.io/docs/providers/aws/r/cloudtrail.html for details on this variable
       include_management_events = bool
       read_write_type           = string
 
