@@ -2,7 +2,8 @@ variable "users" {
   type = list(object({
     username          = string
     policy_attachment = optional(list(string), [])
-    enforce_mfa       = optional(bool, true)
+    enforce_mfa       = optional(bool, true) # whether user should be placed into enforce mfa group, note that the enforce_mfa.enabled should be set to true to have this applied
+    create            = optional(bool, true) # whether the user should be created or not, so that existing iam user can be linked/placed into a group
   }))
   default     = []
   description = "List of users"
@@ -21,6 +22,7 @@ variable "groups" {
 
 variable "enforce_mfa" {
   type = object({
+    enabled                           = optional(bool, false) # whether to create enforce mfa iam group
     group_name                        = optional(string, "enforce-mfa")
     policy_name                       = optional(string, "mfa-enforce-policy")
     manage_own_signing_certificates   = optional(bool, true)

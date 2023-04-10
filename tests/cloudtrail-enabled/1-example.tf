@@ -7,6 +7,7 @@ module "this" {
 
   cloudtrail = {
     enabled                = true
+    enable_logging         = false # disable logging to not have s3 object crated and not allowed to destroy test logs bucket
     enable_cloudwatch_logs = true
     name                   = "audit-my-project"
     event_selector = [
