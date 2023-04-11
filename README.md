@@ -23,7 +23,7 @@ module "account" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 4.62.0 |
 
 ## Modules
 
@@ -36,6 +36,7 @@ module "account" {
 | <a name="module_enforce_mfa_group"></a> [enforce\_mfa\_group](#module\_enforce\_mfa\_group) | terraform-aws-modules/iam/aws//modules/iam-group-with-policies | 5.9.2 |
 | <a name="module_groups"></a> [groups](#module\_groups) | terraform-aws-modules/iam/aws//modules/iam-group-with-policies | 5.9.2 |
 | <a name="module_monitoring_billing"></a> [monitoring\_billing](#module\_monitoring\_billing) | dasmeta/monitoring/aws//modules/billing | 1.3.9 |
+| <a name="module_secrets"></a> [secrets](#module\_secrets) | dasmeta/modules/aws//modules/secret | 2.1.3 |
 | <a name="module_users"></a> [users](#module\_users) | dasmeta/modules/aws//modules/aws-iam-user | 1.5.2 |
 
 ## Resources
@@ -54,6 +55,7 @@ module "account" {
 | <a name="input_create_cloudwatch_log_role"></a> [create\_cloudwatch\_log\_role](#input\_create\_cloudwatch\_log\_role) | This is an account level configuration which creates IAM role with policy allowing cloudwatch sync/push logs into cloudwatch | `bool` | `false` | no |
 | <a name="input_enforce_mfa"></a> [enforce\_mfa](#input\_enforce\_mfa) | MFA related configs, set the name for enforce MFA IAM user group value to null if you want this group to not be created | <pre>object({<br>    enabled                           = optional(bool, false) # whether to create enforce mfa iam group<br>    group_name                        = optional(string, "enforce-mfa")<br>    policy_name                       = optional(string, "mfa-enforce-policy")<br>    manage_own_signing_certificates   = optional(bool, true)<br>    manage_own_ssh_public_keys        = optional(bool, true)<br>    manage_own_git_credentials        = optional(bool, true)<br>    attach_iam_self_management_policy = optional(bool, false)<br>  })</pre> | `{}` | no |
 | <a name="input_groups"></a> [groups](#input\_groups) | n/a | <pre>list(object({<br>    name                              = string<br>    custom_group_policies             = optional(list(map(string)), [])<br>    custom_group_policy_arns          = optional(list(string), [])<br>    attach_iam_self_management_policy = optional(bool, false)<br>    users                             = optional(list(string), [])<br>  }))</pre> | `[]` | no |
+| <a name="input_secrets"></a> [secrets](#input\_secrets) | Allows to create account level aws secret manager secret for storing global/shared secrets, which supposed can be used by all services/apps/environments | <pre>object({<br>    enabled                 = optional(bool, false)<br>    name                    = optional(string, "account")<br>    value                   = optional(any, null)<br>    recovery_window_in_days = optional(number, 30)<br>  })</pre> | `{}` | no |
 | <a name="input_users"></a> [users](#input\_users) | List of users | <pre>list(object({<br>    username          = string<br>    policy_attachment = optional(list(string), [])<br>    enforce_mfa       = optional(bool, true) # whether user should be placed into enforce mfa group, note that the enforce_mfa.enabled should be set to true to have this applied<br>    create            = optional(bool, true) # whether the user should be created or not, so that existing iam user can be linked/placed into a group<br>  }))</pre> | `[]` | no |
 
 ## Outputs
