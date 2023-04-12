@@ -126,3 +126,14 @@ variable "create_cloudwatch_log_role" {
   default     = false
   description = "This is an account level configuration which creates IAM role with policy allowing cloudwatch sync/push logs into cloudwatch"
 }
+
+variable "secrets" {
+  type = object({
+    enabled                 = optional(bool, false)
+    name                    = optional(string, "account")
+    value                   = optional(any, null)
+    recovery_window_in_days = optional(number, 30)
+  })
+  default     = {}
+  description = "Allows to create account level aws secret manager secret for storing global/shared secrets, which supposed can be used by all services/apps/environments"
+}
