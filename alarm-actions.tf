@@ -1,6 +1,6 @@
 module "cloudwatch_alarm_actions" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.3.8"
+  version = "1.5.2"
 
   count = var.alarm_actions.enabled ? 1 : 0
 
