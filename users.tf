@@ -1,6 +1,6 @@
 module "users" {
   source  = "dasmeta/modules/aws//modules/aws-iam-user"
-  version = "1.5.2"
+  version = "2.1.2"
 
   for_each = { for user in var.users : user.username => user if user.create }
 
@@ -10,7 +10,7 @@ module "users" {
 
 module "groups" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-group-with-policies"
-  version = "5.9.2"
+  version = "5.17.0"
 
   for_each = { for groups in var.groups : groups.name => groups }
 
@@ -28,7 +28,7 @@ module "groups" {
 # Enforce MFA preparations
 module "enforce_mfa_group" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-group-with-policies"
-  version = "5.9.2"
+  version = "5.17.0"
 
   count = var.enforce_mfa.enabled ? 1 : 0
 
