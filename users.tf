@@ -55,3 +55,21 @@ module "enforce_mfa" {
   manage_own_ssh_public_keys      = var.enforce_mfa.manage_own_ssh_public_keys
   manage_own_git_credentials      = var.enforce_mfa.manage_own_git_credentials
 }
+
+# TODO: move this(iam-account-password-policy) sub-module sources form terraform-aws-modules repo into current(terraform-aws-account) or terraform-aws-iam repo
+module "password_policy" {
+  count = var.password_policy.enabled ? 1 : 0
+
+  source  = "dasmeta/modules/aws//modules/iam-account-password-policy"
+  version = "1.5.2"
+
+  allow_users_to_change_password = var.password_policy.allow_users_to_change_password
+  minimum_password_length        = var.password_policy.minimum_password_length
+  require_lowercase_characters   = var.password_policy.require_lowercase_characters
+  require_numbers                = var.password_policy.require_numbers
+  require_symbols                = var.password_policy.require_symbols
+  require_uppercase_characters   = var.password_policy.require_uppercase_characters
+  max_password_age               = var.password_policy.max_password_age
+  hard_expiry                    = var.password_policy.hard_expiry
+  password_reuse_prevention      = var.password_policy.password_reuse_prevention
+}
