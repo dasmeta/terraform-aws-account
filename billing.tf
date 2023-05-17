@@ -1,6 +1,6 @@
 module "monitoring_billing" {
   source  = "dasmeta/monitoring/aws//modules/billing"
-  version = "1.4.3"
+  version = "1.5.2"
 
   count = var.alarm_actions.enabled && var.alarm_actions.billing_alarm.enabled ? 1 : 0
 
