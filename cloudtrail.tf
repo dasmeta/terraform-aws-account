@@ -1,6 +1,6 @@
 module "cloudtrail" {
   source  = "dasmeta/modules/aws//modules/cloudtrail/"
-  version = "2.1.2"
+  version = "2.2.0"
 
   count = var.cloudtrail.enabled ? 1 : 0
 
