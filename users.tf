@@ -1,6 +1,6 @@
 module "users" {
   source  = "dasmeta/modules/aws//modules/aws-iam-user"
-  version = "2.1.2"
+  version = "2.3.0"
 
   for_each = { for user in var.users : user.username => user if user.create }
 
@@ -61,7 +61,7 @@ module "password_policy" {
   count = var.password_policy.enabled ? 1 : 0
 
   source  = "dasmeta/modules/aws//modules/iam-account-password-policy"
-  version = "1.5.2"
+  version = "2.3.0"
 
   allow_users_to_change_password = var.password_policy.allow_users_to_change_password
   minimum_password_length        = var.password_policy.minimum_password_length
