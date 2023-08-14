@@ -19,7 +19,7 @@ module "cloudwatch_alarm_actions_virginia" {
 
   count = var.alarm_actions.enabled ? 1 : 0
 
-  topic_name          = var.alarm_actions.topic_name
+  topic_name          = "${var.alarm_actions.topic_name}-virginia"
   email_addresses     = var.alarm_actions.email_addresses
   phone_numbers       = var.alarm_actions.phone_numbers
   web_endpoints       = var.alarm_actions.web_endpoints
