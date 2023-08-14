@@ -90,6 +90,7 @@ variable "alarm_actions" {
     email_addresses = optional(list(string), [])
     phone_numbers   = optional(list(string), [])
     web_endpoints   = optional(list(string), [])
+    teams_webhooks  = optional(list(string), [])
     slack_webhooks = optional(list(object({
       hook_url = string
       channel  = string
