@@ -27,7 +27,7 @@ module "cloudwatch_alarm_actions_virginia" {
   servicenow_webhooks = var.alarm_actions.servicenow_webhooks
   teams_webhooks      = var.alarm_actions.teams_webhooks
 
-  provider = {
+  providers = {
     aws = aws.virginia
   }
 }
