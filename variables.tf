@@ -85,12 +85,63 @@ variable "cloudtrail" {
 
 variable "alarm_actions" {
   type = object({
-    enabled         = optional(bool, false)
-    topic_name      = optional(string, "account-alarms-handling")
-    email_addresses = optional(list(string), [])
-    phone_numbers   = optional(list(string), [])
-    web_endpoints   = optional(list(string), [])
-    teams_webhooks  = optional(list(string), [])
+    enabled                  = optional(bool, false)
+    topic_name               = optional(string, "account-alarms-handling")
+    enable_dead_letter_queue = optional(bool, false)
+    email_addresses          = optional(list(string), [])
+    phone_numbers            = optional(list(string), [])
+    web_endpoints            = optional(list(string), [])
+    teams_webhooks           = optional(list(string), [])
+    slack_webhooks = optional(list(object({
+      hook_url = string
+      channel  = string
+      username = string
+    })), [])
+    servicenow_webhooks = optional(list(object({
+      domain = string
+      path   = string
+      user   = string
+      pass   = string
+    })), [])
+    billing_alarm = optional(object({ # Allows to setup billing (cost exceeded) alarm for aws account, NOTE: you have to at first enable 'alarm_actions' and then enable this
+      enabled                = optional(bool, false)
+      name                   = optional(string, "Account-Monthly-Budget")
+      limit_amount           = optional(string, "200")
+      limit_unit             = optional(string, "USD")
+      time_unit              = optional(string, "MONTHLY")
+      time_period_start      = optional(string, "2022-01-01_00:00")
+      time_period_end        = optional(string, "2087-06-15_00:00")
+      threshold              = optional(string, "200")
+      threshold_type         = optional(string, "PERCENTAGE")
+      comparison_operator    = optional(string, "GREATER_THAN")
+      notification_type      = optional(string, "ACTUAL")
+      notify_email_addresses = optional(list(string), [])
+    }), { enabled : false })
+    security_hub_alarms = optional(object({ # Allows to enable security hub for aws account, create separate sns topic for it and setup opsgenie subscriber.
+      enabled                                = optional(bool, false)
+      opsgenie_webhook                       = optional(string, null)
+      securityhub_action_target_name         = optional(string, "Send-to-SNS")
+      sns_topic_name                         = optional(string, "Send-to-Opsgenie")
+      protocol                               = optional(string, "https")
+      link_mode                              = optional(string, "ALL_REGIONS")
+      enable_security_hub                    = optional(bool, true) # not confuse with enabled option, this one is for setting "false" in case when aws security hub service already enabled
+      enable_security_hub_finding_aggregator = optional(bool, true)
+    }), { enabled : false })
+  })
+
+  default     = { enabled = false, billing_alarm = { enabled : false }, security_hub_alarms = { enabled : false } }
+  description = "Whether to enable/create regional(TODO: add also us-east-1 region alarm also for health-check alarms) SNS topic/subscribers"
+}
+
+variable "alarm_actions_virginia" {
+  type = object({
+    enabled                  = optional(bool, false)
+    topic_name               = optional(string, "account-alarms-handling")
+    enable_dead_letter_queue = optional(bool, false)
+    email_addresses          = optional(list(string), [])
+    phone_numbers            = optional(list(string), [])
+    web_endpoints            = optional(list(string), [])
+    teams_webhooks           = optional(list(string), [])
     slack_webhooks = optional(list(object({
       hook_url = string
       channel  = string
