@@ -1,6 +1,6 @@
 module "secrets" {
   source  = "dasmeta/modules/aws//modules/secret"
-  version = "2.1.3"
+  version = "2.3.2"
 
   count = var.secrets.enabled ? 1 : 0
 
