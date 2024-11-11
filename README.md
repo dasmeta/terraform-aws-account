@@ -30,7 +30,9 @@ module "account" {
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_cloudtrail"></a> [cloudtrail](#module\_cloudtrail) | dasmeta/modules/aws//modules/cloudtrail/ | 2.18.0 |
-| <a name="module_monitoring_security_hub"></a> [monitoring\_security\_hub](#module\_monitoring\_security\_hub) | dasmeta/monitoring/aws//modules/aws-security-hub-opsgenie | 1.8.0 |
+| <a name="module_cloudwatch_alarm_actions"></a> [cloudwatch\_alarm\_actions](#module\_cloudwatch\_alarm\_actions) | git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/cloudwatch-alarm-actions | DMVP-5761 |
+| <a name="module_cloudwatch_alarm_actions_virginia"></a> [cloudwatch\_alarm\_actions\_virginia](#module\_cloudwatch\_alarm\_actions\_virginia) | git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/cloudwatch-alarm-actions | DMVP-5761 |
+| <a name="module_monitoring_security_hub"></a> [monitoring\_security\_hub](#module\_monitoring\_security\_hub) | dasmeta/monitoring/aws//modules/aws-security-hub-opsgenie | 1.5.2 |
 | <a name="module_secrets"></a> [secrets](#module\_secrets) | dasmeta/modules/aws//modules/secret | 2.18.0 |
 
 ## Resources
