@@ -1,6 +1,6 @@
 module "monitoring_security_hub" {
   source  = "dasmeta/monitoring/aws//modules/aws-security-hub-opsgenie"
-  version = "1.5.2"
+  version = "1.8.0"
 
 
   count = var.alarm_actions.security_hub_alarms.enabled ? 1 : 0
