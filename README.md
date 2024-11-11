@@ -40,7 +40,6 @@ module "account" {
 | <a name="module_monitoring_security_hub"></a> [monitoring\_security\_hub](#module\_monitoring\_security\_hub) | dasmeta/monitoring/aws//modules/aws-security-hub-opsgenie | 1.8.0 |
 | <a name="module_password_policy"></a> [password\_policy](#module\_password\_policy) | dasmeta/modules/aws//modules/iam-account-password-policy | 2.18.0 |
 | <a name="module_secrets"></a> [secrets](#module\_secrets) | dasmeta/modules/aws//modules/secret | 2.18.0 |
-| <a name="module_users"></a> [users](#module\_users) | dasmeta/modules/aws//modules/aws-iam-user | 2.1.2 |
 
 ## Resources
 

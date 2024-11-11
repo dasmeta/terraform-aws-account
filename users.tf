@@ -1,12 +1,12 @@
-module "users" {
-  source  = "dasmeta/modules/aws//modules/aws-iam-user"
-  version = "2.1.2"
+# module "users" {
+#   source  = "dasmeta/modules/aws//modules/aws-iam-user"
+#   version = "2.1.2"
 
-  for_each = { for user in var.users : user.username => user if user.create }
+#   for_each = { for user in var.users : user.username => user if user.create }
 
-  username          = each.value.username
-  policy_attachment = each.value.policy_attachment
-}
+#   username          = each.value.username
+#   policy_attachment = each.value.policy_attachment
+# }
 
 module "groups" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-group-with-policies"
