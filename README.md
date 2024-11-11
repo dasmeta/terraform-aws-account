@@ -29,7 +29,6 @@ module "account" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_buckets"></a> [buckets](#module\_buckets) | dasmeta/s3/aws | 1.2.1 |
 | <a name="module_cloudtrail"></a> [cloudtrail](#module\_cloudtrail) | dasmeta/modules/aws//modules/cloudtrail/ | 2.18.0 |
 | <a name="module_monitoring_security_hub"></a> [monitoring\_security\_hub](#module\_monitoring\_security\_hub) | dasmeta/monitoring/aws//modules/aws-security-hub-opsgenie | 1.8.0 |
 | <a name="module_secrets"></a> [secrets](#module\_secrets) | dasmeta/modules/aws//modules/secret | 2.18.0 |
