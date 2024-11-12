@@ -1,8 +1,6 @@
 module "monitoring_billing" {
-  # source  = "dasmeta/monitoring/aws//modules/billing"
-  # version = "1.19.2"
-  source = "git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/billing?ref=DMVP-5761"
-
+  source  = "dasmeta/monitoring/aws//modules/billing"
+  version = "1.19.3"
 
   count = var.alarm_actions.enabled && var.alarm_actions.billing_alarm.enabled ? 1 : 0
 

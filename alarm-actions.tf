@@ -40,11 +40,10 @@ locals {
 }
 
 module "cloudwatch_alarm_actions" {
-  # source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  # version = "1.5.6"
+  source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
+  version = "1.19.3"
 
-  source = "git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/cloudwatch-alarm-actions?ref=DMVP-5761"
-  count  = var.alarm_actions.enabled ? 1 : 0
+  count = var.alarm_actions.enabled ? 1 : 0
 
   topic_name               = var.alarm_actions.topic_name
   email_addresses          = var.alarm_actions.email_addresses
@@ -58,10 +57,10 @@ module "cloudwatch_alarm_actions" {
 }
 
 module "cloudwatch_alarm_actions_virginia" {
-  # source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  # version = "1.5.6"
-  source = "git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/cloudwatch-alarm-actions?ref=DMVP-5761"
-  count  = var.alarm_actions_virginia.enabled ? 1 : 0
+  source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
+  version = "1.19.3"
+
+  count = var.alarm_actions_virginia.enabled ? 1 : 0
 
   topic_name               = "${var.alarm_actions_virginia.topic_name}-virginia"
   email_addresses          = var.alarm_actions_virginia.email_addresses
