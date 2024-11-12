@@ -29,7 +29,6 @@ module "account" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_buckets"></a> [buckets](#module\_buckets) | dasmeta/s3/aws | 1.2.1 |
 | <a name="module_cloudtrail"></a> [cloudtrail](#module\_cloudtrail) | dasmeta/modules/aws//modules/cloudtrail/ | 2.18.0 |
 | <a name="module_cloudwatch_alarm_actions"></a> [cloudwatch\_alarm\_actions](#module\_cloudwatch\_alarm\_actions) | dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions | 1.19.3 |
 | <a name="module_cloudwatch_alarm_actions_virginia"></a> [cloudwatch\_alarm\_actions\_virginia](#module\_cloudwatch\_alarm\_actions\_virginia) | dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions | 1.19.3 |
