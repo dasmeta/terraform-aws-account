@@ -111,7 +111,7 @@ variable "alarm_actions" {
       time_unit              = optional(string, "MONTHLY")
       time_period_start      = optional(string, "2022-01-01_00:00")
       time_period_end        = optional(string, "2087-06-15_00:00")
-      threshold              = optional(string, "200")
+      thresholds             = optional(list(string), ["40", "60", "80", "90", "100", "110"])
       threshold_type         = optional(string, "PERCENTAGE")
       comparison_operator    = optional(string, "GREATER_THAN")
       notification_type      = optional(string, "ACTUAL")
