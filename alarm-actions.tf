@@ -65,10 +65,10 @@ module "cloudwatch_alarm_actions_virginia" {
   topic_name               = "${var.alarm_actions_virginia.topic_name}-virginia"
   email_addresses          = var.alarm_actions_virginia.email_addresses
   phone_numbers            = var.alarm_actions_virginia.phone_numbers
-  web_endpoints            = nonsensitive(var.alarm_actions_virginia.web_endpoints)
-  slack_webhooks           = nonsensitive(var.alarm_actions_virginia.slack_webhooks)
-  servicenow_webhooks      = nonsensitive(var.alarm_actions_virginia.servicenow_webhooks)
-  teams_webhooks           = nonsensitive(var.alarm_actions_virginia.teams_webhooks)
+  web_endpoints            = var.alarm_actions_virginia.web_endpoints
+  slack_webhooks           = var.alarm_actions_virginia.slack_webhooks
+  servicenow_webhooks      = var.alarm_actions_virginia.servicenow_webhooks
+  teams_webhooks           = var.alarm_actions_virginia.teams_webhooks
   enable_dead_letter_queue = var.alarm_actions_virginia.enable_dead_letter_queue
   policy                   = local.policy
 
