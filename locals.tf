@@ -76,7 +76,7 @@ locals {
           "SNS:ListSubscriptionsByTopic",
           "SNS:Publish"
         ],
-        "Resource" : "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:${var.alarm_actions.topic_name}",
+        "Resource" : "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:${var.alarm_actions.topic_name}-virginia",
         "Condition" : {
           "StringEquals" : {
             "AWS:SourceOwner" : "${data.aws_caller_identity.current.account_id}"
