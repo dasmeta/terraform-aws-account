@@ -32,7 +32,7 @@ module "cloudwatch_alarm_actions_virginia" {
   servicenow_webhooks      = var.alarm_actions_virginia.servicenow_webhooks
   teams_webhooks           = var.alarm_actions_virginia.teams_webhooks
   enable_dead_letter_queue = var.alarm_actions_virginia.enable_dead_letter_queue
-  policy                   = local.sns_access_policy
+  policy                   = local.sns_access_policy_virginia
 
   providers = {
     aws = aws.virginia
