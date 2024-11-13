@@ -1,6 +1,6 @@
 module "cloudwatch_alarm_actions" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.19.3"
+  version = "1.19.4"
 
   count = var.alarm_actions.enabled ? 1 : 0
 
@@ -17,7 +17,7 @@ module "cloudwatch_alarm_actions" {
 
 module "cloudwatch_alarm_actions_virginia" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.19.3"
+  version = "1.19.4"
 
   count = var.alarm_actions_virginia.enabled ? 1 : 0
 
