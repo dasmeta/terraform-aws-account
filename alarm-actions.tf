@@ -19,7 +19,6 @@ module "cloudwatch_alarm_actions_virginia" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
   version = "1.19.5"
 
-
   count = var.alarm_actions_virginia.enabled ? 1 : 0
 
   topic_name               = "${var.alarm_actions_virginia.topic_name}-virginia"
