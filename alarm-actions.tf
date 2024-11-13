@@ -1,6 +1,6 @@
 module "cloudwatch_alarm_actions" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.19.4"
+  version = "1.19.5"
 
   count = var.alarm_actions.enabled ? 1 : 0
 
@@ -17,7 +17,7 @@ module "cloudwatch_alarm_actions" {
 
 module "cloudwatch_alarm_actions_virginia" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.19.4"
+  version = "1.19.5"
 
   count = var.alarm_actions_virginia.enabled ? 1 : 0
 
@@ -29,7 +29,7 @@ module "cloudwatch_alarm_actions_virginia" {
   servicenow_webhooks      = var.alarm_actions_virginia.servicenow_webhooks
   teams_webhooks           = var.alarm_actions_virginia.teams_webhooks
   enable_dead_letter_queue = var.alarm_actions_virginia.enable_dead_letter_queue
-  policy                   = local.sns_access_policy
+  policy                   = local.sns_access_policy_virginia
 
   providers = {
     aws = aws.virginia
