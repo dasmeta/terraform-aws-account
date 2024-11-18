@@ -1,5 +1,5 @@
 module "monitoring_security_hub" {
-  source  = "dasmeta/monitoring/aws//modules/security-hub/"
+  source  = "dasmeta/monitoring/aws//modules/aws-security-hub-opsgenie/"
   version = "1.19.5"
 
 
