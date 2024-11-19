@@ -10,6 +10,7 @@ module "monitoring_security_hub" {
   create_teams_target          = var.alarm_actions.security_hub_alarms.create_teams_target
   sns_email_subscription       = var.alarm_actions.security_hub_alarms.sns_email_subscription
   sns_opsgenie_subscription    = var.alarm_actions.security_hub_alarms.opsgenie_webhook
+  create_sns_target            = var.alarm_actions.security_hub_alarms.create_sns_target
   lambda_environment_variables = var.alarm_actions.security_hub_alarms.lambda_environment_variables
 
   link_mode                              = var.alarm_actions.security_hub_alarms.link_mode
