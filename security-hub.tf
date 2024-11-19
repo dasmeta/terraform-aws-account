@@ -6,7 +6,7 @@ module "monitoring_security_hub" {
   count = var.alarm_actions.security_hub_alarms.enabled ? 1 : 0
 
   name                         = var.alarm_actions.security_hub_alarms.sns_topic_name
-  create_slack_target          = var.alarm_actions.security_hub_alarms.slack_webhook
+  create_slack_target          = var.alarm_actions.security_hub_alarms.create_slack_target
   create_teams_target          = var.alarm_actions.security_hub_alarms.create_teams_target
   sns_email_subscription       = var.alarm_actions.security_hub_alarms.sns_email_subscription
   sns_opsgenie_subscription    = var.alarm_actions.security_hub_alarms.opsgenie_webhook
