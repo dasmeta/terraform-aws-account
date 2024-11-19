@@ -1,7 +1,7 @@
 module "monitoring_security_hub" {
-  source  = "dasmeta/monitoring/aws//modules/security-hub/"
-  version = "1.19.5"
-
+  # source  = "dasmeta/monitoring/aws//modules/security-hub/"
+  # version = "1.19.5"
+  source = "git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/security-hub?ref=DMVP-4582"
 
   count = var.alarm_actions.security_hub_alarms.enabled ? 1 : 0
 
