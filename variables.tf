@@ -124,6 +124,7 @@ variable "alarm_actions" {
       create_slack_target                    = optional(bool, false)
       sns_email_subscription                 = optional(string, "")
       create_teams_target                    = optional(bool, false)
+      create_sns_target                      = optional(bool, false)
       lambda_environment_variables           = optional(map(any), {})
       sns_topic_name                         = optional(string, "Send-to-Opsgenie")
       protocol                               = optional(string, "https")
