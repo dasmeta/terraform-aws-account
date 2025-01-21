@@ -5,7 +5,8 @@ output "users" {
       arn                         = user.iam_user_arn
       password_encrypted          = user.iam_user_login_profile_encrypted_password
       access_key_id               = user.iam_access_key_id
-      secret_access_key_encrypted = user.iam_access_key_encrypted_secret
+      secret_access_key_encrypted = user.iam_access_key_secret
     }
   }
+  sensitive = true
 }

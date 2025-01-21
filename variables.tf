@@ -22,7 +22,7 @@ variable "groups" {
 
 variable "enforce_mfa" {
   type = object({
-    enabled                           = optional(bool, false) # whether to create enforce mfa iam group
+    enabled                           = optional(bool, true) # whether to create enforce mfa iam group
     group_name                        = optional(string, "enforce-mfa")
     policy_name                       = optional(string, "mfa-enforce-policy")
     manage_own_signing_certificates   = optional(bool, true)

@@ -1,6 +1,6 @@
 module "users" {
-  source  = "dasmeta/modules/aws//modules/aws-iam-user"
-  version = "2.1.2"
+  source  = "dasmeta/iam/aws//modules/user"
+  version = "1.2.1"
 
   for_each = { for user in var.users : user.username => user if user.create }
 
