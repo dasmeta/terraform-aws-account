@@ -120,10 +120,6 @@ variable "alarm_actions" {
     security_hub_alarms = optional(object({ # Allows to enable security hub for aws account, create separate sns topic for it and setup opsgenie subscriber.
       enabled                                = optional(bool, false)
       opsgenie_webhook                       = optional(string, null)
-      securityhub_action_target_name         = optional(string, "Send-to-SNS")
-      sns_topic_name                         = optional(string, "Send-to-Opsgenie")
-      protocol                               = optional(string, "https")
-      link_mode                              = optional(string, "ALL_REGIONS")
       enable_security_hub                    = optional(bool, true) # not confuse with enabled option, this one is for setting "false" in case when aws security hub service already enabled
       enable_security_hub_finding_aggregator = optional(bool, true)
     }), { enabled : false })
@@ -216,4 +212,10 @@ variable "password_policy" {
   })
   default     = {}
   description = "Allows to create/set aws iam users password policy for better security"
+}
+
+variable "security_hub_name" {
+  type        = string
+  description = "name of the security hub resources"
+  default     = "account-security-hub-bridge"
 }
