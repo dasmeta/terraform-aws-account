@@ -2,7 +2,7 @@ module "monitoring_security_hub" {
   source  = "dasmeta/monitoring/aws//modules/security-hub"
   version = "1.19.5"
 
-  name = var.security_hub_name
+  name = var.alarm_actions.security_hub_alarms.name
 
   count = var.alarm_actions.security_hub_alarms.enabled ? 1 : 0
 
