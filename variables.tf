@@ -22,7 +22,7 @@ variable "groups" {
 
 variable "enforce_mfa" {
   type = object({
-    enabled                           = optional(bool, false) # whether to create enforce mfa iam group
+    enabled                           = optional(bool, true) # whether to create enforce mfa iam group
     group_name                        = optional(string, "enforce-mfa")
     policy_name                       = optional(string, "mfa-enforce-policy")
     manage_own_signing_certificates   = optional(bool, true)
@@ -118,12 +118,9 @@ variable "alarm_actions" {
       notify_email_addresses = optional(list(string), [])
     }), { enabled : false })
     security_hub_alarms = optional(object({ # Allows to enable security hub for aws account, create separate sns topic for it and setup opsgenie subscriber.
+      name                                   = optional(string, "account-security-hub-bridge")
       enabled                                = optional(bool, false)
       opsgenie_webhook                       = optional(string, null)
-      securityhub_action_target_name         = optional(string, "Send-to-SNS")
-      sns_topic_name                         = optional(string, "Send-to-Opsgenie")
-      protocol                               = optional(string, "https")
-      link_mode                              = optional(string, "ALL_REGIONS")
       enable_security_hub                    = optional(bool, true) # not confuse with enabled option, this one is for setting "false" in case when aws security hub service already enabled
       enable_security_hub_finding_aggregator = optional(bool, true)
     }), { enabled : false })

@@ -2,8 +2,8 @@ module "buckets" {
   # TODO: We need to upgrade this module to the new version "dasmeta/s3/aws", but this version requires AWS provider 5.0 or higher.
   # We need to upgrade all account modules to support AWS provider version 5 and higher.
 
-  source  = "dasmeta/modules/aws//modules/s3"
-  version = "2.1.2"
+  source  = "dasmeta/s3/aws"
+  version = "1.3.1"
 
   for_each = { for bucket in var.buckets : bucket.name => bucket }
 

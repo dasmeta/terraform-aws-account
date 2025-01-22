@@ -7,6 +7,11 @@ module "this" {
     }
   ]
 
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
+
   enforce_mfa = {
     enabled     = true
     group_name  = "enforce-mfa-test"

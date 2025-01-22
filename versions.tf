@@ -5,6 +5,7 @@ terraform {
     aws = {
       source                = "hashicorp/aws"
       configuration_aliases = [aws, aws.virginia]
+      version               = "~> 5.0"
     }
   }
 }
