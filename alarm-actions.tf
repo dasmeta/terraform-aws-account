@@ -13,6 +13,7 @@ module "cloudwatch_alarm_actions" {
   teams_webhooks           = var.alarm_actions.teams_webhooks
   enable_dead_letter_queue = var.alarm_actions.enable_dead_letter_queue
   policy                   = local.sns_access_policy
+  log_group_retention_days = var.alarm_actions.log_group_retention_days
 }
 
 module "cloudwatch_alarm_actions_virginia" {
@@ -30,6 +31,7 @@ module "cloudwatch_alarm_actions_virginia" {
   teams_webhooks           = var.alarm_actions_virginia.teams_webhooks
   enable_dead_letter_queue = var.alarm_actions_virginia.enable_dead_letter_queue
   policy                   = local.sns_access_policy_virginia
+  log_group_retention_days = var.alarm_actions_virginia.log_group_retention_days
 
   providers = {
     aws = aws.virginia

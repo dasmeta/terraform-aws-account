@@ -92,6 +92,7 @@ variable "alarm_actions" {
     phone_numbers            = optional(list(string), [])
     web_endpoints            = optional(list(string), [])
     teams_webhooks           = optional(list(string), [])
+    log_group_retention_days = optional(number, 7)
     slack_webhooks = optional(list(object({
       hook_url = string
       channel  = string
@@ -139,6 +140,7 @@ variable "alarm_actions_virginia" {
     phone_numbers            = optional(list(string), [])
     web_endpoints            = optional(list(string), [])
     teams_webhooks           = optional(list(string), [])
+    log_group_retention_days = optional(number, 7)
     slack_webhooks = optional(list(object({
       hook_url = string
       channel  = string
