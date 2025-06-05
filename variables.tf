@@ -37,7 +37,7 @@ variable "enforce_mfa" {
 variable "buckets" {
   type = list(object({
     name                    = string
-    acl                     = optional(string, "private")
+    acl                     = optional(string, "private") # the bucket acl which cant be null in new s3 module
     ignore_public_acls      = optional(bool, true)
     restrict_public_buckets = optional(bool, true)
     block_public_acls       = optional(bool, true)
@@ -223,7 +223,7 @@ variable "cost_report_export" {
     enabled                = optional(bool, false)
     webhook_endpoint       = optional(string, null)                  # required if enabled, this is endpoint to which the report will be sent via POST request
     name                   = optional(string, "account-cost-report") # the identifier part used for lambda function and event bridge cronjob schedule namings
-    logs_retention_in_days = optional(number, 7)                     # the retention days for lambda function which sent cost data to webhook endpoint
+    logs_retention_in_days = optional(number, 7)                     # the retention days of logs in cloudwatch for lambda function which sent cost data to webhook endpoint
     eventBridgeBus = optional(object({
       create   = optional(bool, false)                 # whether to create event bridge bus, there is default bus name 'default' what can be used without creating separate one
       name     = optional(string, "default")           # the bus name, default bus pre-exist and we can use it
@@ -232,5 +232,5 @@ variable "cost_report_export" {
     }), {})
   })
   default     = {}
-  description = "Allows to configure and get cost report previous day to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
+  description = "Allows to configure and get cost report of previous day to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
 }
