@@ -9,6 +9,30 @@ module "this" {
   webhook_endpoint = "https://example-webhook-endpoint.com"
 }
 ```
+## The webhook endpoint receives POST request daily with following kind formed json data for success and failure cases
+### on success to prepare cost data:
+```json
+{
+  "success": true,
+  "message": "Successfully retrieved cost data for 2025-06-03",
+  "cost": 47.9213566179,
+  "currency": "USD",
+  "date": "2025-06-03",
+  "accountId": "<aws-account-id>",
+  "timestamp": "2025-06-04T09:29:42.115Z"
+}
+```
+
+### on failure to prepare cost report:
+```json
+{
+  "success": false,
+  "message": "Failed to retrieve cost data: {error-description}",
+  "accountId": "<aws-account-id>",
+  "timestamp": "2025-06-04T09:07:45.455Z"
+}
+```
+
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
