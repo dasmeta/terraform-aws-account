@@ -1,7 +1,4 @@
 module "buckets" {
-  # TODO: We need to upgrade this module to the new version "dasmeta/s3/aws", but this version requires AWS provider 5.0 or higher.
-  # We need to upgrade all account modules to support AWS provider version 5 and higher.
-
   source  = "dasmeta/s3/aws"
   version = "1.3.1"
 

@@ -19,6 +19,11 @@ provider "aws" {
   region = "eu-central-1"
 }
 
+provider "aws" {
+  region = "us-east-1"
+  alias  = "virginia"
+}
+
 module "user" {
   source  = "dasmeta/modules/aws//modules/aws-iam-user"
   version = "2.1.2"

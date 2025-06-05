@@ -1,0 +1,7 @@
+{
+  "name": "cost-report-export",
+  "type": "module",
+  "dependencies": {
+    "date-fns": "^4.1.0"
+  }
+}

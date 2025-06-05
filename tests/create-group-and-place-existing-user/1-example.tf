@@ -8,7 +8,8 @@ module "this" {
     }
   ]
 
-  # depends_on = [
-  #   module.user
-  # ]
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
 }

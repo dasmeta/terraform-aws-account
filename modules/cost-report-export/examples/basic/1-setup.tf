@@ -3,7 +3,7 @@ terraform {
 
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.41"
+      version = "~> 5.0"
     }
   }
 
@@ -18,16 +18,4 @@ terraform {
 */
 provider "aws" {
   region = "eu-central-1"
-}
-
-provider "aws" {
-  region = "us-east-1"
-  alias  = "virginia"
-}
-
-module "user" {
-  source  = "dasmeta/modules/aws//modules/aws-iam-user"
-  version = "1.5.2"
-
-  username = "test-user-for-account-module-existing"
 }

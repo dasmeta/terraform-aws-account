@@ -13,4 +13,9 @@ module "this" {
     group_name  = "enforce-mfa-test"
     policy_name = "mfa-enforce-policy-test"
   }
+
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
 }
