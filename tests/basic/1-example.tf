@@ -34,4 +34,9 @@ module "this" {
       enabled = true
     }
   }
+
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
 }

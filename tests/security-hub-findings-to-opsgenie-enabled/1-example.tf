@@ -12,4 +12,9 @@ module "this" {
       enable_security_hub_finding_aggregator = false
     }
   }
+
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
 }

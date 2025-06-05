@@ -5,4 +5,9 @@ module "this" {
     enabled    = true
     topic_name = "test-account-alarms-handling"
   }
+
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
 }

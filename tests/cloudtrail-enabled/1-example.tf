@@ -35,4 +35,9 @@ module "this" {
     insight_selector = ["ApiCallRateInsight", "ApiErrorRateInsight"]
     alerts_events    = ["iam-user-creation-or-deletion", "iam-role-creation-or-deletion"]
   }
+
+  providers = {
+    aws          = aws
+    aws.virginia = aws.virginia
+  }
 }
