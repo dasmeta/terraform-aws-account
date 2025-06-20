@@ -7,7 +7,11 @@ module "lambda_function" {
   handler       = "index.handler"
   runtime       = "nodejs22.x"
 
-  source_path                       = "${path.module}/src/"
+  ## we disable function .zip content generation via code and use .zip for being able to use the module in tf cloud
+  # source_path = "${path.module}/src/"
+  create_package         = false
+  local_existing_package = "${path.module}/account-cost-report-lambda.zip"
+
   publish                           = true
   cloudwatch_logs_retention_in_days = var.logs_retention_in_days
   environment_variables = {
