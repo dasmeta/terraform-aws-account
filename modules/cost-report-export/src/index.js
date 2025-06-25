@@ -88,9 +88,10 @@ export const handler = async (event, context) => {
 const getCosts = async (event) => {
   const today = new Date(); // Current date and time (in UTC on Lambda, unless specified otherwise)
 
-  const previousDay = subDays(today, 1);
-  const startDatePrevious = format(previousDay, 'yyyy-MM-dd');
-  const endDatePrevious = format(today, 'yyyy-MM-dd'); // End date is exclusive
+  const twoDaysBefore = subDays(today, 2);
+  const threeDaysBefore = subDays(today, 3);
+  const startDatePrevious = format(threeDaysBefore, 'yyyy-MM-dd');
+  const endDatePrevious = format(twoDaysBefore, 'yyyy-MM-dd'); // End date is exclusive
 
   const queryStartDate = startDatePrevious;
   const queryEndDate = endDatePrevious;
@@ -118,18 +119,18 @@ const getCosts = async (event) => {
         const totalAmount = resultForPeriod.Total.UnblendedCost.Amount;
         const totalUnit = resultForPeriod.Total.UnblendedCost.Unit;
 
-        console.log(`Cost for ${timePeriod.Start} to ${timePeriod.End}: ${totalAmount} ${totalUnit}`);
         totalCost += parseFloat(totalAmount);
         currency = totalUnit
       }
     }
 
-    console.log(`Total cost for the queried period (${queryStartDate} to ${queryEndDate}): ${totalCost} USD`);
+    console.log(`Total cost for the queried period (${queryStartDate} to ${queryEndDate}): ${totalCost} ${currency}`);
 
     return {
       success: true,
       message: `Successfully retrieved cost data for ${queryStartDate}`,
       cost: totalCost,
+      value: totalCost,
       currency,
       date: queryStartDate
     };
