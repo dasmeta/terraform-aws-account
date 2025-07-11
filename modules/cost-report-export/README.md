@@ -4,7 +4,7 @@
 ```terraform
 module "this" {
   source  = "dasmeta/account/aws//modules/cost-report-export"
-  version = "1.3.3"
+  version = "1.3.5"
 
   webhook_endpoint = "https://example-webhook-endpoint.com"
 }
