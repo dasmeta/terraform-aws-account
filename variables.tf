@@ -234,3 +234,18 @@ variable "cost_report_export" {
   default     = {}
   description = "Allows to configure and get cost report of previous day to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
 }
+
+variable "account_events_export" {
+  type = object({
+    enabled          = optional(bool, false)
+    webhook_endpoint = optional(string, null)                    # required if enabled, this is endpoint to which the events will be sent via POST request
+    name             = optional(string, "account-events-export") # the identifier part used for lambda function and event bridge subscription
+    eventBridgeBus = optional(object({
+      create              = optional(bool, false)                                                                                                                           # whether to create event bridge bus, there is default bus name 'default' what can be used without creating separate one
+      name                = optional(string, "default")                                                                                                                     # the bus name, default bus pre-exist and we can use it
+      rule_pattern_source = optional(list(string), ["aws.ec2", "aws.s3", "aws.rds", "aws.eks", "aws.sqs", "aws.lambda", "aws.iam", "aws.vpc", "custom.test", "aws.lambda"]) # The list of aws services to capture and stream/export event
+    }), {})
+  })
+  default     = {}
+  description = "Allows to configure and stream aws account important events to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
+}
