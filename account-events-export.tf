@@ -1,4 +1,4 @@
-module "cost-report-export" {
+module "account-events-export" {
   source = "./modules/account-events-export"
 
   count = var.account_events_export.enabled ? 1 : 0
