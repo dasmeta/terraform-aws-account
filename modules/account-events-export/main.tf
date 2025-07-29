@@ -23,8 +23,8 @@ module "event_bridge" {
   source  = "terraform-aws-modules/eventbridge/aws"
   version = "3.17.1"
 
-  create_bus = var.eventBridgeBus.create
-  bus_name   = var.eventBridgeBus.name
+  create_bus = var.event_bridge_bus.create
+  bus_name   = var.event_bridge_bus.name
 
   attach_lambda_policy = true
   lambda_target_arns   = [module.lambda_function.lambda_function_arn]
@@ -33,7 +33,7 @@ module "event_bridge" {
   rules = {
     "${var.name}" = {
       description   = "Capture all aws important events and sent/export to webhook endpoint"
-      event_pattern = jsonencode({ "source" : var.eventBridgeBus.rule_pattern_source })
+      event_pattern = jsonencode({ "source" : var.event_bridge_bus.rule_pattern_source })
       enabled       = true
     }
   }

@@ -92,6 +92,7 @@ variable "alarm_actions" {
     email_addresses          = optional(list(string), [])
     phone_numbers            = optional(list(string), [])
     web_endpoints            = optional(list(string), [])
+    lambda_arns              = optional(list(string), [])
     teams_webhooks           = optional(list(string), [])
     log_group_retention_days = optional(number, 7)
     slack_webhooks = optional(list(object({
@@ -132,7 +133,7 @@ variable "alarm_actions" {
   description = "Whether to enable/create regional(TODO: add also us-east-1 region alarm also for health-check alarms) SNS topic/subscribers"
 }
 
-variable "alarm_actions_virginia" {
+variable "alarm_actions_virginia" { # TODO: it seems we can combine alarm_actions_virginia into alarm_actions so that we will have one source of config, as we usually have same channels for alarm in both primary and virginia regions
   type = object({
     enabled                  = optional(bool, false)
     topic_name               = optional(string, "account-alarms-handling")
@@ -140,6 +141,7 @@ variable "alarm_actions_virginia" {
     email_addresses          = optional(list(string), [])
     phone_numbers            = optional(list(string), [])
     web_endpoints            = optional(list(string), [])
+    lambda_arns              = optional(list(string), [])
     teams_webhooks           = optional(list(string), [])
     log_group_retention_days = optional(number, 7)
     slack_webhooks = optional(list(object({
@@ -224,7 +226,7 @@ variable "cost_report_export" {
     webhook_endpoint       = optional(string, null)                  # required if enabled, this is endpoint to which the report will be sent via POST request
     name                   = optional(string, "account-cost-report") # the identifier part used for lambda function and event bridge cronjob schedule namings
     logs_retention_in_days = optional(number, 7)                     # the retention days of logs in cloudwatch for lambda function which sent cost data to webhook endpoint
-    eventBridgeBus = optional(object({
+    event_bridge_bus = optional(object({
       create   = optional(bool, false)                 # whether to create event bridge bus, there is default bus name 'default' what can be used without creating separate one
       name     = optional(string, "default")           # the bus name, default bus pre-exist and we can use it
       schedule = optional(string, "cron(0 5 * * ? *)") # schedule to collect cost data, by default we use once a day at 05:00 AM UTC schedule to collect previous day data 'cron(0 5 * * ? *)'
@@ -240,10 +242,10 @@ variable "account_events_export" {
     enabled          = optional(bool, false)
     webhook_endpoint = optional(string, null)                    # required if enabled, this is endpoint to which the events will be sent via POST request
     name             = optional(string, "account-events-export") # the identifier part used for lambda function and event bridge subscription
-    eventBridgeBus = optional(object({
-      create              = optional(bool, false)                                                                                                                           # whether to create event bridge bus, there is default bus name 'default' what can be used without creating separate one
-      name                = optional(string, "default")                                                                                                                     # the bus name, default bus pre-exist and we can use it
-      rule_pattern_source = optional(list(string), ["aws.ec2", "aws.s3", "aws.rds", "aws.eks", "aws.sqs", "aws.lambda", "aws.iam", "aws.vpc", "custom.test", "aws.lambda"]) # The list of aws services to capture and stream/export event
+    event_bridge_bus = optional(object({
+      create              = optional(bool, false)                                                                                                                                                                                                                                                                                                                                                                                                                                                # whether to create event bridge bus, there is default bus name 'default' what can be used without creating separate one
+      name                = optional(string, "default")                                                                                                                                                                                                                                                                                                                                                                                                                                          # the bus name, default bus pre-exist and we can use it
+      rule_pattern_source = optional(list(string), ["aws.route53", "aws.cloudfront", "aws.acm", "aws.cloudwatch", "aws.amplify", "aws.health", "aws.securityhub", "aws.budgets", "aws.secretsmanager", "aws.events", "aws.autoscaling", "aws.elasticache", "aws.elb", "aws.amazonmq", "aws.ec2", "aws.s3", "aws.rds", "aws.apigateway", "aws.waf", "aws.waf-regional", "aws.savingsplans", "aws.opensearchservice", "aws.sqs", "aws.lambda", "aws.iam", "aws.vpc", "custom.test", "aws.lambda"]) # The list of aws services to capture and stream/export event, for available event sources check https://docs.aws.amazon.com/eventbridge/latest/ref/events.html
     }), {})
   })
   default     = {}
