@@ -10,7 +10,7 @@ variable "name" {
   description = "The naming to use to create resource"
 }
 
-variable "eventBridgeBus" {
+variable "event_bridge_bus" {
   type = object({
     create   = optional(bool, false)                 # whether to create event bridge bus, there is default bus name 'default' what can be used without creating separate one
     name     = optional(string, "default")           # the bus name, default bus pre-exist and we can use it
