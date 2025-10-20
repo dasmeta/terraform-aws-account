@@ -205,16 +205,16 @@ variable "secrets" {
 
 variable "password_policy" {
   type = object({
-    enabled                        = optional(bool, false)
+    enabled                        = optional(bool, true)
     allow_users_to_change_password = optional(bool, true)
-    minimum_password_length        = optional(number, 10)
+    minimum_password_length        = optional(number, 16)
     require_lowercase_characters   = optional(bool, true)
     require_numbers                = optional(bool, true)
     require_symbols                = optional(bool, true)
     require_uppercase_characters   = optional(bool, true)
     max_password_age               = optional(number, 90)
     hard_expiry                    = optional(bool, false)
-    password_reuse_prevention      = optional(number, 3)
+    password_reuse_prevention      = optional(number, 5)
   })
   default     = {}
   description = "Allows to create/set aws iam users password policy for better security"
