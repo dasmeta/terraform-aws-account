@@ -212,7 +212,7 @@ variable "password_policy" {
     require_numbers                = optional(bool, true)
     require_symbols                = optional(bool, true)
     require_uppercase_characters   = optional(bool, true)
-    max_password_age               = optional(number, 91)
+    max_password_age               = optional(number, 90)
     hard_expiry                    = optional(bool, false)
     password_reuse_prevention      = optional(number, 5)
   })
