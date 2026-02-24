@@ -86,47 +86,87 @@ variable "cloudtrail" {
 
 variable "alarm_actions" {
   type = object({
-    enabled                  = optional(bool, false)
-    topic_name               = optional(string, "account-alarms-handling")
-    enable_dead_letter_queue = optional(bool, false)
-    email_addresses          = optional(list(string), [])
-    phone_numbers            = optional(list(string), [])
-    web_endpoints            = optional(list(string), [])
-    lambda_arns              = optional(list(string), [])
-    teams_webhooks           = optional(list(string), [])
-    log_group_retention_days = optional(number, 7)
-    slack_webhooks = optional(list(object({
-      hook_url = string
-      channel  = string
-      username = string
+    enabled                  = optional(bool, false)                       # Enable/disable alarm actions module for account-level notifications
+    topic_name               = optional(string, "account-alarms-handling") # SNS topic name for account alarms. If empty, defaults to "account-alarms-handling"
+    enable_dead_letter_queue = optional(bool, false)                       # Whether to enable dead letter queue (SQS) for failed Lambda invocations
+    email_addresses          = optional(list(string), [])                  # List of email addresses to receive alarm notifications
+    phone_numbers            = optional(list(string), [])                  # List of international formatted phone numbers (e.g., "+1234567890") to receive SMS notifications
+    web_endpoints            = optional(list(string), [])                  # List of webhook endpoints (e.g., Opsgenie, PagerDuty) to receive HTTP POST notifications
+    lambda_arns              = optional(list(string), [])                  # List of Lambda function ARNs to invoke when alarms are triggered. Note: Lambda functions must be in the same region as the SNS topic
+    teams_webhooks           = optional(list(string), [])                  # List of Microsoft Teams webhook URLs for sending notifications to Teams channels
+    log_group_retention_days = optional(number, 7)                         # Number of days to retain CloudWatch Logs for Lambda functions (default: 7 days)
+    slack_webhooks = optional(list(object({                                # List of Slack webhook configurations for sending notifications to Slack channels
+      hook_url = string                                                    # Slack webhook URL
+      channel  = string                                                    # Slack channel name (e.g., "#alerts")
+      username = string                                                    # Bot username for Slack messages
     })), [])
-    servicenow_webhooks = optional(list(object({
-      domain = string
-      path   = string
-      user   = string
-      pass   = string
+    servicenow_webhooks = optional(list(object({ # List of ServiceNow webhook configurations for creating incidents in ServiceNow
+      domain = string                            # ServiceNow instance domain (e.g., "yourcompany.service-now.com")
+      path   = string                            # API endpoint path
+      user   = string                            # ServiceNow username
+      pass   = string                            # ServiceNow password or API token
     })), [])
-    billing_alarm = optional(object({ # Allows to setup billing (cost exceeded) alarm for aws account, NOTE: you have to at first enable 'alarm_actions' and then enable this
-      enabled                = optional(bool, false)
-      name                   = optional(string, "Account-Monthly-Budget")
-      limit_amount           = optional(string, "200")
-      limit_unit             = optional(string, "USD")
-      time_unit              = optional(string, "MONTHLY")
-      time_period_start      = optional(string, "2022-01-01_00:00")
-      time_period_end        = optional(string, "2087-06-15_00:00")
-      thresholds             = optional(list(string), ["40", "60", "80", "90", "100", "110"])
-      threshold_type         = optional(string, "PERCENTAGE")
-      comparison_operator    = optional(string, "GREATER_THAN")
-      notification_type      = optional(string, "ACTUAL")
-      notify_email_addresses = optional(list(string), [])
+    billing_alarm = optional(object({                                                         # Allows to setup billing (cost exceeded) alarm for aws account, NOTE: you have to at first enable 'alarm_actions' and then enable this
+      enabled                = optional(bool, false)                                          # Enable/disable billing alarm for cost monitoring
+      name                   = optional(string, "Account-Monthly-Budget")                     # Name of the AWS Budget for cost monitoring
+      limit_amount           = optional(string, "200")                                        # Budget limit amount (as string, e.g., "200")
+      limit_unit             = optional(string, "USD")                                        # Budget limit unit (e.g., "USD")
+      time_unit              = optional(string, "MONTHLY")                                    # Budget time unit: MONTHLY, QUARTERLY, or ANNUALLY
+      time_period_start      = optional(string, "2022-01-01_00:00")                           # Budget start date in format YYYY-MM-DD_HH:MM
+      time_period_end        = optional(string, "2087-06-15_00:00")                           # Budget end date in format YYYY-MM-DD_HH:MM
+      thresholds             = optional(list(string), ["40", "60", "80", "90", "100", "110"]) # List of threshold percentages at which to trigger alerts (e.g., ["40", "60", "80"])
+      threshold_type         = optional(string, "PERCENTAGE")                                 # Threshold type: PERCENTAGE or ABSOLUTE_VALUE
+      comparison_operator    = optional(string, "GREATER_THAN")                               # Comparison operator: GREATER_THAN, LESS_THAN, EQUAL_TO
+      notification_type      = optional(string, "ACTUAL")                                     # Notification type: ACTUAL or FORECASTED
+      notify_email_addresses = optional(list(string), [])                                     # List of email addresses to receive billing alarm notifications
     }), { enabled : false })
-    security_hub_alarms = optional(object({ # Allows to enable security hub for aws account, create separate sns topic for it and setup opsgenie subscriber.
-      name                                   = optional(string, "account-security-hub-bridge")
-      enabled                                = optional(bool, false)
-      opsgenie_webhook                       = optional(string, null)
-      enable_security_hub                    = optional(bool, true) # not confuse with enabled option, this one is for setting "false" in case when aws security hub service already enabled
-      enable_security_hub_finding_aggregator = optional(bool, true)
-    }), { enabled : false })
+    security_hub_alarms = optional(object({                           # Allows to enable security hub alarm actions, by default it will use account level sns topic for security hub alarms, if you want to use custom alarm actions, you can set use_account_topic to false and set custom_alarm_actions to a map of alarm actions or a list of alarm actions
+      enabled           = optional(bool, false)                       # whether to enable security hub alarm actions, if false, will not create any alarm actions
+      use_account_topic = optional(bool, true)                        # whether to use account level sns topic(and notification channels) for security hub alarms, if false, will create separate sns topic for it
+      custom_alarm_actions = optional(object({                        # custom alarm actions to be used for security hub alarms, this get enabled when security_hub_alarms.enabled is true and security_hub_alarms.use_account_topic is false
+        topic_name                       = optional(string, "")       # Takes affect if use_account_topic is false. SNS topic name. If empty and create_topic=false, will use existing topic from alarm_actions module
+        create_topic                     = optional(bool, true)       # Takes affect if use_account_topic is false. Whether to create a new SNS topic. Set to false to reuse existing topic from alarm_actions module
+        topic_assign_security_hub_policy = optional(bool, true)       # Whether to assign the default security hub policy to the SNS topic
+        email_addresses                  = optional(list(string), []) # List of email addresses to receive Security Hub findings notifications
+        fallback_email_addresses         = optional(list(string), []) # List of fallback email addresses to receive notifications when primary channels fail
+        phone_numbers                    = optional(list(string), []) # List of international formatted phone numbers (e.g., "+1234567890") to receive SMS notifications
+        fallback_phone_numbers           = optional(list(string), []) # List of fallback phone numbers for SMS notifications when primary channels fail
+        web_endpoints                    = optional(list(string), []) # List of webhook endpoints (e.g., Opsgenie, PagerDuty) to receive HTTP POST notifications
+        fallback_web_endpoints           = optional(list(string), []) # List of fallback webhook endpoints when primary channels fail
+        lambda_arns                      = optional(list(string), []) # List of Lambda function ARNs to invoke when Security Hub findings are received. Note: Lambda functions must be in the same region as the SNS topic
+        fallback_lambda_arns             = optional(list(string), []) # List of fallback Lambda function ARNs when primary channels fail
+        slack_webhooks = optional(list(object({                       # List of Slack webhook configurations for sending notifications to Slack channels
+          hook_url = string                                           # Slack webhook URL
+          channel  = string                                           # Slack channel name (e.g., "#security-alerts")
+          username = string                                           # Bot username for Slack messages
+        })), [])
+        servicenow_webhooks = optional(list(object({ # List of ServiceNow webhook configurations for creating incidents in ServiceNow
+          domain = string                            # ServiceNow instance domain (e.g., "yourcompany.service-now.com")
+          path   = string                            # API endpoint path
+          user   = string                            # ServiceNow username
+          pass   = string                            # ServiceNow password or API token
+        })), [])
+        teams_webhooks = optional(list(string), []) # List of Microsoft Teams webhook URLs for sending notifications to Teams channels
+        jira_config = optional(list(object({        # List of Jira configurations for creating tickets for Security Hub findings
+          url            = string                   # Jira instance URL (e.g., "https://yourcompany.atlassian.net")
+          key            = string                   # Jira project key
+          user_username  = string                   # Jira username
+          user_api_token = string                   # Jira API token
+        })), [])
+        delivery_policy          = optional(any, null)      # SNS topic delivery policy for retry and throttling configuration. Controls how SNS retries message delivery to endpoints
+        policy                   = optional(any, null)      # SNS topic policy (IAM policy document) for controlling access to the topic. If null, uses default policy allowing EventBridge to publish
+        log_group_retention_days = optional(number, 7)      # Number of days to retain CloudWatch Logs for Lambda functions (default: 7 days)
+        enable_dead_letter_queue = optional(bool, true)     # Whether to enable dead letter queue (SQS) for failed Lambda invocations
+        recreate_missing_package = optional(bool, true)     # Whether to recreate missing Lambda deployment packages if they are missing locally
+        log_level                = optional(string, "INFO") # Log level for Lambda functions ("DEBUG", "INFO", "WARNING", "ERROR")
+        lambda_failed_alert = optional(any, {               # CloudWatch alarm configuration for monitoring Lambda function failures. Triggers when Lambda functions fail to process notifications
+          period    = 60                                    # Evaluation period in seconds
+          threshold = 1                                     # Number of failures to trigger alarm
+          equation  = "gte"                                 # Comparison operator (greater than or equal)
+          statistic = "sum"                                 # Statistic type (sum, average, etc.)
+        })
+      }), {})
+    }), {})
   })
 
   default     = { enabled = false, billing_alarm = { enabled : false }, security_hub_alarms = { enabled : false } }
@@ -250,4 +290,242 @@ variable "account_events_export" {
   })
   default     = {}
   description = "Allows to configure and stream aws account important events to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
+}
+
+variable "security_hub" {
+  type = object({
+    enabled = optional(bool, false) # Enable/disable Security Hub and its submodules
+    name    = optional(string, "account-security-hub")
+    # Security Hub configuration
+    enable_security_hub                    = optional(bool, true)            # Whether to enable Security Hub service. Set to false if Security Hub is already enabled
+    enable_security_hub_finding_aggregator = optional(bool, true)            # Whether to enable Security Hub finding aggregator for multi-region/account aggregation
+    link_mode                              = optional(string, "ALL_REGIONS") # Linking mode for finding aggregator: ALL_REGIONS, SPECIFIED_REGIONS, or ALL
+    specified_regions                      = optional(list(string), [])      # List of regions for SPECIFIED_REGIONS link mode
+    enabled_standards = optional(set(string), [                              # Security Hub standards to enable. Available standards:
+      "aws-foundational-security-best-practices/v/1.0.0",                    # AWS Foundational Security Best Practices v1.0.0 (default)
+      "cis-aws-foundations-benchmark/v/1.2.0"                                # CIS AWS Foundations Benchmark v1.2.0 (default)
+      # "cis-aws-foundations-benchmark/v/1.4.0"                             # CIS AWS Foundations Benchmark v1.4.0
+      # "cis-aws-foundations-benchmark/v/3.0.0"                             # CIS AWS Foundations Benchmark v3.0.0
+      # "cis-aws-foundations-benchmark/v/5.0.0"                             # CIS AWS Foundations Benchmark v5.0.0
+      # "aws-resource-tagging-standard/v/1.0.0"                             # AWS Resource Tagging Standard v1.0.0
+      # "nist-800-171-rev2/v/1.0.0"                                         # NIST Special Publication 800-171 Revision 2
+      # "nist-800-53-rev5/v/1.0.0"                                          # NIST Special Publication 800-53 Revision 5
+      # "pci-dss/v/3.2.1"                                                   # PCI DSS v3.2.1
+      # "pci-dss/v/4.0.1"                                                   # PCI DSS v4.0.1
+    ])
+    action_target_name  = optional(string, "SendNotification") # Name of the Security Hub action target for manual triggers
+    securityhub_members = optional(map(string), {})            # Map of email -> account_id for Security Hub member accounts
+    # AWS Config submodule configuration
+    config = optional(object({
+      enabled                    = optional(bool, true)                 # Enable/disable AWS Config. REQUIRED for Security Hub standards to work properly
+      create_service_linked_role = optional(bool, true)                 # Whether to create the AWS Config service-linked role. Set to false if the role already exists
+      record_all_resources       = optional(bool, true)                 # Record all supported resource types in AWS Config
+      include_global_resources   = optional(bool, true)                 # Include global resources (IAM, etc.) in AWS Config recording
+      s3_bucket_name             = optional(string, "")                 # S3 bucket name for AWS Config. If empty, a bucket will be created automatically
+      s3_bucket_force_destroy    = optional(bool, false)                # Force destroy S3 bucket for Config when deleting the module
+      delivery_frequency         = optional(string, "TwentyFour_Hours") # Frequency for Config snapshot delivery
+      included_resource_types    = optional(list(string), [])           # List of resource types to include when record_all_resources is false
+      excluded_resource_types    = optional(list(string), [])           # List of resource types to exclude when record_all_resources is true
+      rules = optional(map(object({                                     # Map of Config rules to create
+        description = optional(string)
+        source = optional(object({
+          owner             = string
+          source_identifier = string
+          source_detail = optional(list(object({
+            event_source                = optional(string)
+            maximum_execution_frequency = optional(string)
+            message_type                = optional(string)
+          })))
+        }))
+        scope = optional(object({
+          compliance_resource_types = optional(list(string))
+          compliance_resource_id    = optional(string)
+          tag_key                   = optional(string)
+          tag_value                 = optional(string)
+        }))
+        input_parameters = optional(string)
+        tags             = optional(map(string))
+      })), {})
+    }), {})
+    # AWS Inspector submodule configuration
+    inspector = optional(object({
+      enabled        = optional(bool, true)                                            # Enable/disable AWS Inspector v2. RECOMMENDED for EC2/EKS vulnerability scanning
+      resource_types = optional(list(string), ["EC2", "ECR", "LAMBDA", "LAMBDA_CODE"]) # Resource types to enable Inspector for. Valid values: EC2, ECR, LAMBDA, LAMBDA_CODE, CODE_REPOSITORY. LAMBDA scans Lambda function configuration (runtime, permissions). LAMBDA_CODE scans Lambda function code (dependencies, vulnerabilities). Both are recommended for comprehensive Lambda scanning
+      filters = optional(map(object({                                                  # Map of findings filters to create. Key is the filter name. If empty, no filters will be created
+        description   = optional(string)                                               # Filter description
+        filter_action = string                                                         # Filter action. Valid values: ARCHIVE (suppress findings), NOOP (no action)
+        filter_criteria = optional(object({                                            # Filter criteria for matching findings
+          aws_account_id = optional(object({                                           # Filter by AWS account ID
+            comparison = string                                                        # Comparison operator (EQUALS, PREFIX, NOT_EQUALS)
+            value      = string                                                        # Account ID value
+          }))
+          component_id = optional(object({ # Filter by component ID
+            comparison = string
+            value      = string
+          }))
+          component_type = optional(object({ # Filter by component type
+            comparison = string
+            value      = string
+          }))
+          ec2_instance_image_id = optional(object({ # Filter by EC2 instance AMI ID
+            comparison = string
+            value      = string
+          }))
+          ec2_instance_subnet_id = optional(object({ # Filter by EC2 instance subnet ID
+            comparison = string
+            value      = string
+          }))
+          ec2_instance_vpc_id = optional(object({ # Filter by EC2 instance VPC ID
+            comparison = string
+            value      = string
+          }))
+          ecr_image_pushed_at = optional(object({ # Filter by ECR image push date/time
+            end_inclusive   = optional(string)    # End date (ISO 8601 format)
+            start_inclusive = optional(string)    # Start date (ISO 8601 format)
+          }))
+          ecr_image_tags = optional(object({ # Filter by ECR image tags
+            comparison = string
+            value      = string
+          }))
+          ecr_image_hash = optional(object({ # Filter by ECR image hash
+            comparison = string
+            value      = string
+          }))
+          finding_arn = optional(object({ # Filter by finding ARN
+            comparison = string
+            value      = string
+          }))
+          finding_status = optional(object({ # Filter by finding status (ACTIVE, SUPPRESSED, CLOSED)
+            comparison = string
+            value      = string
+          }))
+          finding_type = optional(object({ # Filter by finding type
+            comparison = string
+            value      = string
+          }))
+          first_observed_at = optional(object({ # Filter by first observation date/time
+            end_inclusive   = optional(string)  # End date (ISO 8601 format)
+            start_inclusive = optional(string)  # Start date (ISO 8601 format)
+          }))
+          inspector_score = optional(object({  # Filter by Inspector score range
+            lower_inclusive = optional(number) # Minimum score (0-10)
+            upper_inclusive = optional(number) # Maximum score (0-10)
+          }))
+          last_observed_at = optional(object({ # Filter by last observation date/time
+            end_inclusive   = optional(string) # End date (ISO 8601 format)
+            start_inclusive = optional(string) # Start date (ISO 8601 format)
+          }))
+          network_protocol = optional(object({ # Filter by network protocol
+            comparison = string
+            value      = string
+          }))
+          port_range = optional(object({       # Filter by port range
+            begin_inclusive = optional(number) # Start port number
+            end_inclusive   = optional(number) # End port number
+          }))
+          related_vulnerabilities = optional(object({ # Filter by related vulnerability IDs
+            comparison = string
+            value      = string
+          }))
+          resource_id = optional(object({ # Filter by resource ID
+            comparison = string
+            value      = string
+          }))
+          resource_tags = optional(object({ # Filter by resource tags
+            comparison = string             # Comparison operator
+            key        = string             # Tag key
+            value      = optional(string)   # Tag value (optional)
+          }))
+          resource_type = optional(object({ # Filter by resource type (EC2, ECR, LAMBDA)
+            comparison = string
+            value      = string
+          }))
+          severity = optional(object({ # Filter by severity (CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL, UNTRIAGED)
+            comparison = string
+            value      = string
+          }))
+          title = optional(object({ # Filter by finding title
+            comparison = string
+            value      = string
+          }))
+          updated_at = optional(object({       # Filter by last update date/time
+            end_inclusive   = optional(string) # End date (ISO 8601 format)
+            start_inclusive = optional(string) # Start date (ISO 8601 format)
+          }))
+          vendor_severity = optional(object({ # Filter by vendor severity
+            comparison = string
+            value      = string
+          }))
+          vulnerability_id = optional(object({ # Filter by vulnerability ID (CVE ID, etc.)
+            comparison = string
+            value      = string
+          }))
+          vulnerability_source = optional(object({ # Filter by vulnerability source
+            comparison = string
+            value      = string
+          }))
+        }))
+      })), {})
+    }), {})
+    # AWS GuardDuty submodule configuration
+    guardduty = optional(object({
+      enabled                      = optional(bool, false)               # Enable/disable AWS GuardDuty for threat detection
+      finding_publishing_frequency = optional(string, "FIFTEEN_MINUTES") # Frequency for publishing findings: FIFTEEN_MINUTES, ONE_HOUR, SIX_HOURS
+      enable_s3_protection         = optional(bool, false)               # Enable S3 protection
+      enable_kubernetes_protection = optional(bool, false)               # Enable Kubernetes protection
+      enable_malware_protection    = optional(bool, false)               # Enable malware protection
+      filters = optional(map(object({                                    # Map of GuardDuty filters to create (key is filter name)
+        name        = string                                             # Filter name
+        description = optional(string)
+        action      = string              # Filter action: ARCHIVE or NOOP
+        rank        = optional(number, 1) # Filter rank (1 is highest priority)
+        finding_criteria = object({
+          criterion = map(object({
+            eq                    = optional(list(string), [])
+            neq                   = optional(list(string), [])
+            gt                    = optional(number)
+            gte                   = optional(number)
+            lt                    = optional(number)
+            lte                   = optional(number)
+            equals                = optional(list(string), [])
+            not_equals            = optional(list(string), [])
+            greater_than          = optional(number)
+            greater_than_or_equal = optional(number)
+            less_than             = optional(number)
+            less_than_or_equal    = optional(number)
+          }))
+        })
+      })), {})
+    }), {})
+    # Amazon Macie submodule configuration
+    macie = optional(object({
+      enabled                      = optional(bool, false)               # Enable/disable Amazon Macie for data security
+      finding_publishing_frequency = optional(string, "FIFTEEN_MINUTES") # Frequency for publishing findings: FIFTEEN_MINUTES, ONE_HOUR, SIX_HOURS
+      status                       = optional(string, "ENABLED")         # Macie status: ENABLED or PAUSED
+      findings_filters = optional(map(object({                           # Map of Macie findings filters to create (key is filter name)
+        name        = string                                             # Filter name
+        description = optional(string)
+        action      = string              # Filter action: ARCHIVE or NOOP
+        position    = optional(number, 1) # Filter position (1 is highest priority)
+        finding_criteria = object({
+          criterion = map(object({
+            eq                    = optional(list(string), [])
+            neq                   = optional(list(string), [])
+            gt                    = optional(number)
+            gte                   = optional(number)
+            lt                    = optional(number)
+            lte                   = optional(number)
+            equals                = optional(list(string), [])
+            not_equals            = optional(list(string), [])
+            greater_than          = optional(number)
+            greater_than_or_equal = optional(number)
+            less_than             = optional(number)
+            less_than_or_equal    = optional(number)
+          }))
+        })
+      })), {})
+    }), {})
+  })
+  default     = {}
+  description = "AWS Security Hub configuration with submodules (Config, Inspector, GuardDuty, Macie) and alarm actions for findings notifications"
 }

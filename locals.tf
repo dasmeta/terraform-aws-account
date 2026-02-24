@@ -1,8 +1,9 @@
 locals {
   sns_access_policy = {
-    "Version" : "2008-10-17",
+    "Version" : "2012-10-17",
     "Id" : "__default_policy_ID",
     "Statement" : [
+      # the default policy on topic, we pass it again with custom policy to not lose the default policy as custom policy overrides default
       {
         "Sid" : "__default_statement_ID",
         "Effect" : "Allow",
@@ -26,6 +27,7 @@ locals {
           }
         }
       },
+      # allow budgets to publish to the sns topic, used for billing alerts
       {
         "Sid" : "AWSBudgets-notification-1",
         "Effect" : "Allow",
@@ -35,6 +37,7 @@ locals {
         "Action" : "SNS:Publish",
         "Resource" : "*"
       },
+      # allow cloudwatch to publish to the sns topic
       {
         "Sid" : "CloudWatch-Alarms-Publish",
         "Effect" : "Allow",
@@ -51,6 +54,16 @@ locals {
           "SNS:ListSubscriptionsByTopic",
           "SNS:Publish"
         ],
+        "Resource" : "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.alarm_actions.topic_name}"
+      },
+      # allow event bridge to publish to the sns topic, needed for security hub findings rules
+      {
+        "Sid" : "AllowEventBridgePublish",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "events.amazonaws.com"
+        },
+        "Action" : "SNS:Publish",
         "Resource" : "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.alarm_actions.topic_name}"
       }
     ]

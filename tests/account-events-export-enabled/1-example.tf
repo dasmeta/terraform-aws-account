@@ -7,7 +7,7 @@ module "this" {
 
   account_events_export = {
     enabled          = true
-    webhook_endpoint = "https://example-webhook-endpoint.com"
+    webhook_endpoint = "https://n8n.example.com/webhook/uuid?accountId=123475168"
   }
 
   providers = {

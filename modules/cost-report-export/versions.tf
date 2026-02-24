@@ -5,7 +5,7 @@ terraform {
     aws = {
       source = "hashicorp/aws"
       # configuration_aliases = [aws.virginia] # the cost reports service is global and only available in us-east-1 currently
-      version = "~> 5.0"
+      version = ">= 5.0, < 7.0"
     }
     random = {
       source  = "hashicorp/random"

@@ -1,6 +1,6 @@
 module "buckets" {
   source  = "dasmeta/s3/aws"
-  version = "1.3.1"
+  version = "1.3.3"
 
   for_each = { for bucket in var.buckets : bucket.name => bucket }
 

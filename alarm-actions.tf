@@ -1,6 +1,6 @@
 module "cloudwatch_alarm_actions" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.20.1"
+  version = "1.21.0"
 
   count = var.alarm_actions.enabled ? 1 : 0
 
@@ -20,7 +20,7 @@ module "cloudwatch_alarm_actions" {
 # TODO: it seems we can combine alarm_actions_virginia into alarm_actions so that we will have one source of config, as we usually have same channels for alarm in both primary and virginia regions
 module "cloudwatch_alarm_actions_virginia" {
   source  = "dasmeta/monitoring/aws//modules/cloudwatch-alarm-actions"
-  version = "1.20.1"
+  version = "1.21.0"
 
   count = var.alarm_actions_virginia.enabled ? 1 : 0
 
