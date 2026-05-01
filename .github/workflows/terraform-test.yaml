@@ -4,13 +4,19 @@ on:
   push:
     branches: [main, master]
 jobs:
-  terraform-test:
+  terraform-validate:
+    permissions:
+      actions: write
+      contents: write
+      discussions: write
+      pull-requests: write
+      id-token: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
         path:
-          - ./
-    permissions: write-all
+          - /
+     
     steps:
     - uses: dasmeta/reusable-actions-workflows/terraform-test@4.2.0
       with:
