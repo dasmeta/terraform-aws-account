@@ -293,7 +293,7 @@ variable "account_events_export" {
       lambda_timeout_seconds    = optional(number, 15)
       message_retention_seconds = optional(number, 1209600)
       dlq_retention_seconds     = optional(number, 1209600)
-      max_receive_count         = optional(number, 5)
+      max_receive_count         = optional(number, 100) # about 2.5 hours with the default 90-second visibility timeout
     }), {})
   })
   default     = {}

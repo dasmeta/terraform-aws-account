@@ -26,6 +26,12 @@ variable "logs_retention_in_days" {
   description = "Lambda function logs retention days"
 }
 
+variable "dlq_alarm_actions" {
+  type        = list(string)
+  default     = []
+  description = "Notification action ARNs for the failed-event queue depth alarm"
+}
+
 variable "delivery" {
   type = object({
     maximum_concurrency       = optional(number, 2)
@@ -33,7 +39,7 @@ variable "delivery" {
     lambda_timeout_seconds    = optional(number, 15)
     message_retention_seconds = optional(number, 1209600)
     dlq_retention_seconds     = optional(number, 1209600)
-    max_receive_count         = optional(number, 5)
+    max_receive_count         = optional(number, 100) # about 2.5 hours with the default 90-second visibility timeout
   })
   default     = {}
   description = "Buffered webhook delivery limits and failure retention"
@@ -59,7 +65,7 @@ variable "delivery" {
   }
 
   validation {
-    condition     = var.delivery.max_receive_count >= 5
-    error_message = "delivery.max_receive_count must be at least 5."
+    condition     = var.delivery.max_receive_count >= 5 && var.delivery.max_receive_count <= 1000
+    error_message = "delivery.max_receive_count must be between 5 and 1000."
   }
 }

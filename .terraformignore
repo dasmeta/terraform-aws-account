@@ -4,6 +4,5 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
-.terraform.lock.hcl
 .env*
 .DS_Store

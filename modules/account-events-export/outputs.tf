@@ -18,7 +18,7 @@ output "event_queue_data" {
 }
 
 output "failed_event_queue_data" {
-  description = "Dead-letter queue identifiers for terminal event-delivery failures"
+  description = "Dead-letter queue identifiers; the queue receives both EventBridge target failures and webhook-delivery redrives"
   value = {
     arn  = module.event_queue.dead_letter_queue_arn
     name = module.event_queue.dead_letter_queue_name

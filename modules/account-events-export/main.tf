@@ -56,6 +56,28 @@ module "event_queue" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "failed_event_queue" {
+  alarm_name        = "${var.name}-dlq-messages-visible"
+  alarm_description = "Account event delivery failures are waiting in the dead-letter queue"
+
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = 1
+
+  namespace   = "AWS/SQS"
+  metric_name = "ApproximateNumberOfMessagesVisible"
+  period      = 60
+  statistic   = "Maximum"
+
+  alarm_actions      = var.dlq_alarm_actions
+  treat_missing_data = "notBreaching"
+
+  dimensions = {
+    QueueName = module.event_queue.dead_letter_queue_name
+  }
+}
+
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "7.21.1"
