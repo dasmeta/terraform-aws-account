@@ -37,6 +37,9 @@ class HttpClientTests(unittest.TestCase):
             opener.requests[0].get_header("Authorization"), "Bearer very-secret-token"
         )
         self.assertEqual(opener.requests[0].get_header("Accept"), "application/json")
+        self.assertEqual(
+            opener.requests[0].get_header("User-agent"), "account-kpi-export/1.0"
+        )
 
     def test_get_retries_429_and_5xx_only(self):
         first_error = http_error(429)

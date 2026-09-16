@@ -35,6 +35,7 @@ class _RejectRedirectHandler(HTTPRedirectHandler):
 
 
 _default_opener = build_opener(_RejectRedirectHandler()).open
+_USER_AGENT = "account-kpi-export/1.0"
 
 
 def _is_transient_status(status):
@@ -100,7 +101,11 @@ def request_json(
         opener = _default_opener
 
     encoded_body = None
-    headers = {"Authorization": "Bearer " + token, "Accept": "application/json"}
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/json",
+        "User-Agent": _USER_AGENT,
+    }
     if body is not None:
         encoded_body = json.dumps(body, separators=(",", ":")).encode("utf-8")
         headers["Content-Type"] = "application/json"
