@@ -6,6 +6,7 @@ module "account_events_export" {
   webhook_endpoint = var.account_events_export.webhook_endpoint
   name             = var.account_events_export.name
   event_bridge_bus = var.account_events_export.event_bridge_bus
+  delivery         = var.account_events_export.delivery
 }
 
 module "account_events_export_virginia" {
@@ -16,6 +17,7 @@ module "account_events_export_virginia" {
   webhook_endpoint = var.account_events_export.webhook_endpoint
   name             = "${var.account_events_export.name}-virginia"
   event_bridge_bus = var.account_events_export.event_bridge_bus
+  delivery         = var.account_events_export.delivery
 
   providers = {
     aws = aws.virginia
