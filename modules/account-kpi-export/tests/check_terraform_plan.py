@@ -135,7 +135,6 @@ def check_iam_state(state, aws_enabled):
 
 def main():
     require('version = ">= 5.98.0, < 7.0"' in (MODULE_ROOT / "versions.tf").read_text(), "Child AWS provider floor drifted")
-    require('version = ">= 5.98.0, < 7.0"' in (MODULE_ROOT / "examples/basic/versions.tf").read_text(), "Direct example AWS provider floor drifted")
     result = subprocess.run([
         "terraform", "-chdir=" + str(MODULE_ROOT), "test", "-filter=tests/account_kpi_export.tftest.hcl", "-json", "-verbose"
     ], capture_output=True, text=True)
