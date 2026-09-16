@@ -277,6 +277,138 @@ variable "cost_report_export" {
   description = "Allows to configure and get cost report of previous day to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
 }
 
+variable "account_kpi_export" {
+  type = object({
+    enabled = optional(bool, false)
+    cloudbrowser = optional(object({
+      base_url               = optional(string, "https://app.dasmeta.com")
+      client_id              = optional(number)
+      secret_arn             = optional(string)
+      aws_provider_id        = optional(number, 1)
+      cloudbrowser_token_key = optional(string, "cloudbrowser_api_token")
+      grafana_token_key      = optional(string, "grafana_api_token")
+    }), {})
+    application = optional(object({
+      enabled        = optional(bool, false)
+      grafana_url    = optional(string, "")
+      datasource_uid = optional(string, "")
+      uptime_query   = optional(string, "")
+      latency_query  = optional(string, "")
+    }), {})
+    cost = optional(object({
+      enabled = optional(bool, true)
+    }), {})
+    security = optional(object({
+      enabled = optional(bool, true)
+      region  = optional(string, "eu-central-1")
+    }), {})
+    metrics = optional(object({
+      security = optional(number, 4)
+      cost     = optional(number, 12)
+      uptime   = optional(number, 24)
+      latency  = optional(number, 26)
+    }), {})
+    schedules = optional(object({
+      timezone                              = optional(string, "Asia/Yerevan")
+      monday_expression                     = optional(string, "cron(0 6 ? * MON *)")
+      wednesday_expression                  = optional(string, "cron(0 6 ? * WED *)")
+      delivery_maximum_event_age_in_seconds = optional(number, 86400)
+      delivery_maximum_retry_attempts       = optional(number, 2)
+    }), {})
+    lambda = optional(object({
+      name                               = optional(string, "account-kpi-export")
+      timeout                            = optional(number, 600)
+      memory_size                        = optional(number, 256)
+      logs_retention_in_days             = optional(number, 30)
+      async_maximum_event_age_in_seconds = optional(number, 21600)
+      async_maximum_retry_attempts       = optional(number, 2)
+      alarm_action_arns                  = optional(list(string), [])
+    }), {})
+  })
+  default     = {}
+  nullable    = false
+  description = "Opt-in weekly account KPIs for CloudBrowser. Client ID and secret ARN are required when enabled; application collection is for the production application account."
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : (
+      var.account_kpi_export.cost.enabled || var.account_kpi_export.security.enabled || var.account_kpi_export.application.enabled
+    )
+    error_message = "The enabled weekly KPI exporter requires at least one enabled cost, security, or application source."
+  }
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : try(
+      can(regex("^https://[^/:?#@]+(:[0-9]+)?(/[^?#]*)?$", lower(trimspace(var.account_kpi_export.cloudbrowser.base_url)))) &&
+      var.account_kpi_export.cloudbrowser.client_id > 0 &&
+      floor(var.account_kpi_export.cloudbrowser.client_id) == var.account_kpi_export.cloudbrowser.client_id &&
+      can(regex("^arn:[^:]+:secretsmanager:[^:]+:[0-9]{12}:secret:.+$", var.account_kpi_export.cloudbrowser.secret_arn)) &&
+      var.account_kpi_export.cloudbrowser.aws_provider_id > 0 &&
+      floor(var.account_kpi_export.cloudbrowser.aws_provider_id) == var.account_kpi_export.cloudbrowser.aws_provider_id &&
+      trimspace(var.account_kpi_export.cloudbrowser.cloudbrowser_token_key) != "" &&
+      trimspace(var.account_kpi_export.cloudbrowser.grafana_token_key) != "",
+      false
+    )
+    error_message = "The enabled exporter requires an HTTPS CloudBrowser base URL with a hostname, optional numeric port, path only, and no userinfo, query, or fragment; token keys; positive integer client/provider IDs; and a Secrets Manager secret ARN."
+  }
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : (
+      !var.account_kpi_export.application.enabled || (
+        can(regex("^https://[^/:?#@]+(:[0-9]+)?(/[^?#]*)?$", lower(trimspace(var.account_kpi_export.application.grafana_url)))) &&
+        alltrue([
+          for value in [var.account_kpi_export.application.grafana_url, var.account_kpi_export.application.datasource_uid, var.account_kpi_export.application.uptime_query, var.account_kpi_export.application.latency_query] :
+          trimspace(value) != ""
+          ]) && alltrue([
+          for query in [var.account_kpi_export.application.uptime_query, var.account_kpi_export.application.latency_query] :
+          replace(query, "$__account_kpi_window", "") != query && replace(query, "$__account_kpi_end_seconds", "") != query
+        ])
+      )
+    )
+    error_message = "Enabled application collection requires an HTTPS Grafana base URL with a hostname, optional numeric port, path only, and no userinfo, query, or fragment; non-empty settings; and both $__account_kpi_window and $__account_kpi_end_seconds in each query."
+  }
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : (
+      trimspace(var.account_kpi_export.security.region) != "" &&
+      alltrue([
+        for id in [var.account_kpi_export.metrics.security, var.account_kpi_export.metrics.cost, var.account_kpi_export.metrics.uptime, var.account_kpi_export.metrics.latency] :
+        id > 0 && floor(id) == id
+      ])
+    )
+    error_message = "The enabled exporter requires a non-empty Security Hub Region and positive integer metric IDs."
+  }
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : (
+      can(regex("^[A-Za-z][A-Za-z0-9._+-]*/[A-Za-z0-9._+-]+(/[A-Za-z0-9._+-]+)*$", var.account_kpi_export.schedules.timezone)) &&
+      trimspace(var.account_kpi_export.schedules.monday_expression) != "" &&
+      trimspace(var.account_kpi_export.schedules.wednesday_expression) != "" &&
+      var.account_kpi_export.schedules.delivery_maximum_event_age_in_seconds >= 60 &&
+      var.account_kpi_export.schedules.delivery_maximum_event_age_in_seconds <= 86400 &&
+      floor(var.account_kpi_export.schedules.delivery_maximum_event_age_in_seconds) == var.account_kpi_export.schedules.delivery_maximum_event_age_in_seconds &&
+      var.account_kpi_export.schedules.delivery_maximum_retry_attempts >= 0 &&
+      var.account_kpi_export.schedules.delivery_maximum_retry_attempts <= 185 &&
+      floor(var.account_kpi_export.schedules.delivery_maximum_retry_attempts) == var.account_kpi_export.schedules.delivery_maximum_retry_attempts
+    )
+    error_message = "Enabled exporter schedules require an IANA-style timezone, non-empty expressions, event age from 60 to 86400 seconds, and 0 to 185 retry attempts."
+  }
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : (
+      can(regex("^[A-Za-z0-9-_]{1,54}$", var.account_kpi_export.lambda.name)) &&
+      var.account_kpi_export.lambda.timeout >= 1 && var.account_kpi_export.lambda.timeout <= 900 && floor(var.account_kpi_export.lambda.timeout) == var.account_kpi_export.lambda.timeout &&
+      var.account_kpi_export.lambda.memory_size >= 128 && var.account_kpi_export.lambda.memory_size <= 10240 && floor(var.account_kpi_export.lambda.memory_size) == var.account_kpi_export.lambda.memory_size &&
+      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.account_kpi_export.lambda.logs_retention_in_days) &&
+      var.account_kpi_export.lambda.async_maximum_event_age_in_seconds >= 60 && var.account_kpi_export.lambda.async_maximum_event_age_in_seconds <= 21600 &&
+      floor(var.account_kpi_export.lambda.async_maximum_event_age_in_seconds) == var.account_kpi_export.lambda.async_maximum_event_age_in_seconds &&
+      var.account_kpi_export.lambda.async_maximum_retry_attempts >= 0 && var.account_kpi_export.lambda.async_maximum_retry_attempts <= 2 &&
+      floor(var.account_kpi_export.lambda.async_maximum_retry_attempts) == var.account_kpi_export.lambda.async_maximum_retry_attempts &&
+      alltrue([for arn in var.account_kpi_export.lambda.alarm_action_arns : trimspace(arn) != ""])
+    )
+    error_message = "Enabled exporter Lambda settings require a name of 1 to 54 characters, AWS runtime bounds, supported log retention, async age from 60 to 21600 seconds, and 0 to 2 async retries."
+  }
+}
+
 variable "account_events_export" {
   type = object({
     enabled          = optional(bool, false)

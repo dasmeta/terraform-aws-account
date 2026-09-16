@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/account-kpi-export/scheduler-event.schema.json",
+  "title": "Account KPI Export Scheduler Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["job"],
+  "properties": {
+    "job": {
+      "type": "string",
+      "enum": ["application", "aws"]
+    }
+  }
+}
