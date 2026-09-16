@@ -76,6 +76,10 @@ def check_shared_contract(plan):
         "Non-default Lambda runtime settings were not forwarded",
     )
     require(function["publish"] is False, "The unaliased Lambda must not publish unused versions")
+    require(
+        function["tracing_config"] == [{"mode": "Active"}],
+        "The enabled root exporter must activate Lambda X-Ray tracing",
+    )
     environment = function["environment"][0]["variables"]
     require(
         environment["SECRET_ARN"] == SECRET_ARN,

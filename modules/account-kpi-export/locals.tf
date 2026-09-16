@@ -42,6 +42,8 @@ locals {
     runtime                                   = "python3.13"
     timeout                                   = var.lambda.timeout
     memory_size                               = var.lambda.memory_size
+    tracing_mode                              = "Active"
+    attach_tracing_policy                     = true
     reserved_concurrent_executions            = 1
     cloudwatch_logs_retention_days            = var.lambda.logs_retention_in_days
     create_package                            = false

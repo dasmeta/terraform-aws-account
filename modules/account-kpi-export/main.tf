@@ -18,6 +18,7 @@ module "lambda_function" {
   runtime       = local.lambda_configuration.runtime
   timeout       = local.lambda_configuration.timeout
   memory_size   = local.lambda_configuration.memory_size
+  tracing_mode  = local.lambda_configuration.tracing_mode
 
   create_package         = local.lambda_configuration.create_package
   local_existing_package = "${path.module}/account-kpi-export-lambda.zip"
@@ -32,6 +33,7 @@ module "lambda_function" {
   vpc_subnet_ids                    = local.lambda_configuration.vpc_subnet_ids
   vpc_security_group_ids            = local.lambda_configuration.vpc_security_group_ids
   attach_network_policy             = false
+  attach_tracing_policy             = local.lambda_configuration.attach_tracing_policy
   cloudwatch_logs_retention_in_days = local.lambda_configuration.cloudwatch_logs_retention_days
 
   create_async_event_config                   = local.lambda_configuration.create_async_event_config
