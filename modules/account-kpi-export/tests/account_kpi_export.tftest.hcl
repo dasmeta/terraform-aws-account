@@ -345,6 +345,7 @@ run "application_only_contract" {
   assert {
     condition = jsondecode(local.config_json).application == {
       enabled        = true
+      source_type    = "prometheus"
       grafana_url    = "https://grafana.example.com"
       datasource_uid = "example-prometheus"
       uptime_query   = "100 * avg_over_time(up[$__account_kpi_window] @ $__account_kpi_end_seconds)"
@@ -353,6 +354,70 @@ run "application_only_contract" {
     }
     error_message = "Enabled application settings must be serialized exactly for the handler."
   }
+}
+
+run "cloudwatch_alb_application_contract" {
+  command = plan
+
+  variables {
+    application = {
+      enabled        = true
+      source_type    = "cloudwatch_alb"
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "cloudwatch"
+      region         = "eu-central-1"
+      load_balancer  = "app/example/123"
+    }
+    cost = {
+      enabled = false
+    }
+    security = {
+      enabled = false
+    }
+  }
+
+  assert {
+    condition = jsondecode(local.config_json).application == {
+      enabled        = true
+      source_type    = "cloudwatch_alb"
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "cloudwatch"
+      region         = "eu-central-1"
+      load_balancer  = "app/example/123"
+      token_key      = "grafana_api_token"
+    }
+    error_message = "CloudWatch ALB settings must be serialized exactly for the handler."
+  }
+}
+
+run "cloudwatch_alb_application_requires_complete_settings" {
+  command = plan
+
+  variables {
+    application = {
+      enabled        = true
+      source_type    = "cloudwatch_alb"
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "cloudwatch"
+    }
+  }
+
+  expect_failures = [var.application]
+}
+
+run "application_rejects_unknown_source_type" {
+  command = plan
+
+  variables {
+    application = {
+      enabled        = true
+      source_type    = "unknown"
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "example"
+    }
+  }
+
+  expect_failures = [var.application]
 }
 
 run "application_and_aws_contract" {

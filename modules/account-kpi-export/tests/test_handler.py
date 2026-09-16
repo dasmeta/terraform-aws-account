@@ -40,6 +40,7 @@ def config(application=False, cost=True, security=True):
         },
         "application": {
             "enabled": application,
+            "source_type": "prometheus",
             "grafana_url": "https://grafana.example",
             "datasource_uid": "prometheus",
             "uptime_query": "avg_over_time(up[$__account_kpi_window] @ $__account_kpi_end_seconds)",
@@ -55,6 +56,20 @@ def config(application=False, cost=True, security=True):
 def aws_only_config(cost=True, security=True):
     value = config(application=False, cost=cost, security=security)
     value["application"] = {"enabled": False}
+    return value
+
+
+def cloudwatch_application_config():
+    value = config(application=True)
+    value["application"] = {
+        "enabled": True,
+        "source_type": "cloudwatch_alb",
+        "grafana_url": "https://grafana.example",
+        "datasource_uid": "cloudwatch",
+        "region": "eu-central-1",
+        "load_balancer": "app/example/123",
+        "token_key": "grafana",
+    }
     return value
 
 
@@ -221,6 +236,21 @@ class HandlerTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.run_job({"job": "application"}, enabled)
 
+    def test_cloudwatch_application_requires_region_and_load_balancer(self):
+        for key in ("region", "load_balancer"):
+            with self.subTest(key=key):
+                enabled = cloudwatch_application_config()
+                enabled["application"][key] = ""
+                with self.assertRaises(ValueError):
+                    self.run_job({"job": "application"}, enabled)
+
+    def test_application_rejects_unknown_source_type(self):
+        enabled = config(application=True)
+        enabled["application"]["source_type"] = "unknown"
+
+        with self.assertRaises(ValueError):
+            self.run_job({"job": "application"}, enabled)
+
     def test_application_collects_pair_before_writes_and_rounds_json_numbers(self):
         secret = FakeSecrets()
         cb = FakeCloudBrowser()
@@ -244,6 +274,43 @@ class HandlerTests(unittest.TestCase):
         self.assertEqual(cb.writes[0][3], "2026-09-08T20:00:00.000Z")
         self.assertEqual(result["period"], {"start_date": "2026-09-07", "end_date": "2026-09-14"})
         self.assertEqual([metric["status"] for metric in result["metrics"]], ["created", "created"])
+
+    def test_cloudwatch_application_dispatches_alb_settings_and_writes_pair(self):
+        cb = FakeCloudBrowser()
+        collected = []
+
+        def application_collector(*args):
+            collected.append(args)
+            return Decimal("99.5"), Decimal("0.25")
+
+        result = self.run_job(
+            {"job": "application"},
+            cloudwatch_application_config(),
+            {
+                "secretsmanager": FakeSecrets(),
+                "cloudbrowser": cb,
+                "application_collector": application_collector,
+            },
+        )
+
+        self.assertEqual(len(collected), 1)
+        self.assertEqual(collected[0][0:4], (
+            "https://grafana.example",
+            "cloudwatch",
+            "eu-central-1",
+            "app/example/123",
+        ))
+        self.assertEqual(collected[0][4], datetime(2026, 9, 6, 20, tzinfo=timezone.utc))
+        self.assertEqual(collected[0][5], datetime(2026, 9, 13, 20, tzinfo=timezone.utc))
+        self.assertEqual(collected[0][6], "grafana-token")
+        self.assertEqual([write[:3] for write in cb.writes], [
+            (24, 101, 99.5),
+            (26, 101, 0.25),
+        ])
+        self.assertEqual([metric["status"] for metric in result["metrics"]], [
+            "created",
+            "created",
+        ])
 
     def test_invalid_application_pair_does_not_write_either_metric(self):
         cb = FakeCloudBrowser()

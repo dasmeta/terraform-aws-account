@@ -120,6 +120,43 @@ class HttpClientTests(unittest.TestCase):
                     request_json("POST", "https://cb.example/api/x", "secret", opener=opener)
                 self.assertEqual(len(opener.requests), 1)
 
+    def test_idempotent_post_retries_transient_failures_like_a_read(self):
+        opener = ScriptedOpener(
+            [URLError("offline"), http_error(503), FakeResponse({"results": {}})]
+        )
+        pauses = []
+
+        result = request_json(
+            "POST",
+            "https://grafana.example/api/ds/query",
+            "secret",
+            body={"queries": []},
+            idempotent=True,
+            opener=opener,
+            sleeper=pauses.append,
+            max_attempts=3,
+        )
+
+        self.assertEqual(result, {"results": {}})
+        self.assertEqual(len(opener.requests), 3)
+        self.assertEqual(pauses, [1, 2])
+
+    def test_idempotent_post_exhaustion_is_not_reported_as_an_ambiguous_write(self):
+        opener = ScriptedOpener([http_error(503)])
+
+        with self.assertRaises(HttpResponseError) as captured:
+            request_json(
+                "POST",
+                "https://grafana.example/api/ds/query",
+                "secret",
+                body={"queries": []},
+                idempotent=True,
+                opener=opener,
+                max_attempts=1,
+            )
+
+        self.assertEqual(captured.exception.status, 503)
+
     def test_post_permanent_4xx_fails_immediately(self):
         opener = ScriptedOpener([http_error(422)])
         with self.assertRaises(HttpResponseError) as captured:

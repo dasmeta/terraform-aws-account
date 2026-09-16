@@ -10,7 +10,11 @@ from urllib.parse import parse_qs, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from grafana import collect_application_metrics, query_grafana
+from grafana import (
+    collect_application_metrics,
+    collect_cloudwatch_alb_metrics,
+    query_grafana,
+)
 
 
 REPORTING_START = datetime(2026, 9, 7, 0, 0, tzinfo=timezone.utc)
@@ -26,6 +30,16 @@ class FakeGrafanaTransport:
     def __call__(self, method, url, token):
         self.calls.append((method, url, token))
         return self.payloads.pop(0)
+
+
+class FakeGrafanaPostTransport:
+    def __init__(self, payload):
+        self.payload = payload
+        self.calls = []
+
+    def __call__(self, method, url, token, body=None, idempotent=False):
+        self.calls.append((method, url, token, body, idempotent))
+        return self.payload
 
 
 def scalar(value):
@@ -347,6 +361,169 @@ class ApplicationMetricPairTests(unittest.TestCase):
                 self.assertEqual(queries[0], expected)
                 self.assertEqual(
                     int(end.timestamp()) - int(start.timestamp()), expected_seconds
+                )
+
+
+def cloudwatch_frame(ref_id, timestamps, values):
+    return {
+        "status": 200,
+        "frames": [
+            {
+                "schema": {
+                    "refId": ref_id,
+                    "fields": [
+                        {"name": "Time", "type": "time"},
+                        {"name": "Value", "type": "number"},
+                    ],
+                },
+                "data": {"values": [timestamps, values]},
+            }
+        ],
+    }
+
+
+class CloudWatchAlbMetricTests(unittest.TestCase):
+    def test_collects_weekly_alb_pair_and_excludes_inclusive_end_boundary(self):
+        start_ms = int(REPORTING_START.timestamp() * 1000)
+        end_ms = int(REPORTING_END.timestamp() * 1000)
+        transport = FakeGrafanaPostTransport(
+            {
+                "results": {
+                    "A": cloudwatch_frame("A", [start_ms, end_ms], [1000, 900]),
+                    "B": cloudwatch_frame("B", [start_ms, end_ms], [5, 90]),
+                    "C": cloudwatch_frame("C", [start_ms, end_ms], [0.25, 8.5]),
+                }
+            }
+        )
+
+        result = collect_cloudwatch_alb_metrics(
+            "https://grafana.example/",
+            "cloudwatch",
+            "eu-central-1",
+            "app/example/123",
+            REPORTING_START,
+            REPORTING_END,
+            "grafana-token",
+            transport=transport,
+        )
+
+        self.assertEqual(result, (Decimal("99.500"), Decimal("0.25")))
+        self.assertEqual(len(transport.calls), 1)
+        method, url, token, body, idempotent = transport.calls[0]
+        self.assertEqual(method, "POST")
+        self.assertEqual(url, "https://grafana.example/api/ds/query")
+        self.assertEqual(token, "grafana-token")
+        self.assertTrue(idempotent)
+        self.assertEqual(body["from"], str(start_ms))
+        self.assertEqual(body["to"], str(end_ms))
+        self.assertEqual([query["refId"] for query in body["queries"]], ["A", "B", "C"])
+        self.assertEqual(
+            [query["metricName"] for query in body["queries"]],
+            ["RequestCount", "HTTPCode_Target_5XX_Count", "TargetResponseTime"],
+        )
+        self.assertEqual(
+            [query["statistic"] for query in body["queries"]],
+            ["Sum", "Sum", "Average"],
+        )
+        self.assertTrue(all(query["period"] == "604800" for query in body["queries"]))
+        self.assertTrue(
+            all(
+                query["dimensions"] == {"LoadBalancer": "app/example/123"}
+                for query in body["queries"]
+            )
+        )
+
+    def test_treats_an_empty_5xx_series_as_zero(self):
+        start_ms = int(REPORTING_START.timestamp() * 1000)
+        transport = FakeGrafanaPostTransport(
+            {
+                "results": {
+                    "A": cloudwatch_frame("A", [start_ms], [100]),
+                    "B": {"status": 200, "frames": []},
+                    "C": cloudwatch_frame("C", [start_ms], [0.125]),
+                }
+            }
+        )
+
+        result = collect_cloudwatch_alb_metrics(
+            "https://grafana.example",
+            "cloudwatch",
+            "eu-central-1",
+            "app/example/123",
+            REPORTING_START,
+            REPORTING_END,
+            "token",
+            transport=transport,
+        )
+
+        self.assertEqual(result, (Decimal("100"), Decimal("0.125")))
+
+    def test_rejects_missing_requests_latency_or_multiple_in_window_points(self):
+        start_ms = int(REPORTING_START.timestamp() * 1000)
+        payloads = [
+            {
+                "results": {
+                    "A": {"status": 200, "frames": []},
+                    "B": cloudwatch_frame("B", [], []),
+                    "C": cloudwatch_frame("C", [start_ms], [0.2]),
+                }
+            },
+            {
+                "results": {
+                    "A": cloudwatch_frame("A", [start_ms], [100]),
+                    "B": cloudwatch_frame("B", [start_ms], [1]),
+                    "C": {"status": 200, "frames": []},
+                }
+            },
+            {
+                "results": {
+                    "A": cloudwatch_frame("A", [start_ms, start_ms + 60_000], [100, 50]),
+                    "B": cloudwatch_frame("B", [start_ms], [1]),
+                    "C": cloudwatch_frame("C", [start_ms], [0.2]),
+                }
+            },
+            {
+                "results": {
+                    "A": cloudwatch_frame("A", [start_ms], [100]),
+                    "B": cloudwatch_frame("B", ["invalid"], [1]),
+                    "C": cloudwatch_frame("C", [start_ms], [0.2]),
+                }
+            },
+        ]
+
+        for payload in payloads:
+            with self.subTest(payload=payload), self.assertRaises(ValueError):
+                collect_cloudwatch_alb_metrics(
+                    "https://grafana.example",
+                    "cloudwatch",
+                    "eu-central-1",
+                    "app/example/123",
+                    REPORTING_START,
+                    REPORTING_END,
+                    "token",
+                    transport=FakeGrafanaPostTransport(payload),
+                )
+
+    def test_rejects_zero_requests_and_error_count_above_requests(self):
+        start_ms = int(REPORTING_START.timestamp() * 1000)
+        for requests, errors in ((0, 0), (100, 101)):
+            payload = {
+                "results": {
+                    "A": cloudwatch_frame("A", [start_ms], [requests]),
+                    "B": cloudwatch_frame("B", [start_ms], [errors]),
+                    "C": cloudwatch_frame("C", [start_ms], [0.2]),
+                }
+            }
+            with self.subTest(requests=requests, errors=errors), self.assertRaises(ValueError):
+                collect_cloudwatch_alb_metrics(
+                    "https://grafana.example",
+                    "cloudwatch",
+                    "eu-central-1",
+                    "app/example/123",
+                    REPORTING_START,
+                    REPORTING_END,
+                    "token",
+                    transport=FakeGrafanaPostTransport(payload),
                 )
 
 

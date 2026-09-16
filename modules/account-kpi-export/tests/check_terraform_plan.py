@@ -45,7 +45,7 @@ def check_plan(plan):
         "base_url": "https://app.dasmeta.com", "client_id": 42, "aws_provider_id": 1, "token_key": "cloudbrowser_api_token"
     }, "CloudBrowser runtime configuration drifted")
     require(config["application"] == {
-        "enabled": True, "grafana_url": "https://grafana.example.com", "datasource_uid": "example-prometheus",
+        "enabled": True, "source_type": "prometheus", "grafana_url": "https://grafana.example.com", "datasource_uid": "example-prometheus",
         "uptime_query": "100 * avg_over_time(up[$__account_kpi_window] @ $__account_kpi_end_seconds)",
         "latency_query": "avg_over_time(request_duration_seconds_sum[$__account_kpi_window] @ $__account_kpi_end_seconds)",
         "token_key": "grafana_api_token"

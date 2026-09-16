@@ -49,3 +49,26 @@ run "root_rejects_userinfo_grafana_base_url" {
 
   expect_failures = [var.account_kpi_export]
 }
+
+run "root_rejects_incomplete_cloudwatch_alb_application_source" {
+  command = plan
+
+  variables {
+    account_kpi_export = {
+      enabled = true
+      cloudbrowser = {
+        client_id  = 42
+        secret_arn = "arn:aws:secretsmanager:eu-central-1:111122223333:secret:account-kpi-example"
+      }
+      application = {
+        enabled        = true
+        source_type    = "cloudwatch_alb"
+        grafana_url    = "https://grafana.example.com"
+        datasource_uid = "cloudwatch"
+        region         = "eu-central-1"
+      }
+    }
+  }
+
+  expect_failures = [var.account_kpi_export]
+}

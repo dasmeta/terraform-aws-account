@@ -155,3 +155,132 @@ def collect_application_metrics(
     if latency < Decimal("0"):
         raise ValueError("Grafana latency must be non-negative")
     return uptime, latency
+
+
+def _cloudwatch_value(payload, ref_id, start_milliseconds, end_milliseconds, empty_value=None):
+    if not isinstance(payload, dict) or not isinstance(payload.get("results"), dict):
+        raise ValueError("Grafana CloudWatch response is malformed")
+    result = payload["results"].get(ref_id)
+    if not isinstance(result, dict) or result.get("status") != 200:
+        raise ValueError("Grafana CloudWatch query was unsuccessful")
+    frames = result.get("frames")
+    if not isinstance(frames, list):
+        raise ValueError("Grafana CloudWatch response is malformed")
+    if not frames and empty_value is not None:
+        return empty_value
+    if len(frames) != 1:
+        raise ValueError("Grafana CloudWatch query must return exactly one series")
+    data = frames[0].get("data") if isinstance(frames[0], dict) else None
+    values = data.get("values") if isinstance(data, dict) else None
+    if (
+        not isinstance(values, list)
+        or len(values) != 2
+        or not isinstance(values[0], list)
+        or not isinstance(values[1], list)
+        or len(values[0]) != len(values[1])
+    ):
+        raise ValueError("Grafana CloudWatch response is malformed")
+    if any(
+        not isinstance(timestamp, (int, float)) or isinstance(timestamp, bool)
+        for timestamp in values[0]
+    ):
+        raise ValueError("Grafana CloudWatch response is malformed")
+    in_window = [
+        raw_value
+        for timestamp, raw_value in zip(values[0], values[1])
+        if start_milliseconds <= timestamp < end_milliseconds
+    ]
+    if not in_window and empty_value is not None:
+        return empty_value
+    if len(in_window) != 1:
+        raise ValueError("Grafana CloudWatch query must return one in-window value")
+    return _finite_decimal(in_window[0])
+
+
+def collect_cloudwatch_alb_metrics(
+    grafana_url,
+    datasource_uid,
+    region,
+    load_balancer,
+    start_utc,
+    end_utc,
+    token,
+    transport=None,
+):
+    """Collect prior-window ALB availability and average latency through Grafana."""
+
+    grafana_url = validate_base_url(grafana_url, "Grafana")
+    for name, value in (
+        ("datasource UID", datasource_uid),
+        ("region", region),
+        ("load balancer", load_balancer),
+    ):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("Grafana CloudWatch {0} must be non-empty".format(name))
+
+    start_seconds = _boundary_seconds(start_utc)
+    end_seconds = _boundary_seconds(end_utc)
+    window_seconds = end_seconds - start_seconds
+    if window_seconds <= 0:
+        raise ValueError("Grafana query boundaries must form a positive interval")
+    start_milliseconds = start_seconds * 1000
+    end_milliseconds = end_seconds * 1000
+    common = {
+        "datasource": {"type": "cloudwatch", "uid": datasource_uid},
+        "region": region,
+        "namespace": "AWS/ApplicationELB",
+        "dimensions": {"LoadBalancer": load_balancer},
+        "period": str(window_seconds),
+        "queryMode": "Metrics",
+        "metricQueryType": 0,
+        "matchExact": True,
+    }
+    queries = [
+        dict(common, refId="A", metricName="RequestCount", statistic="Sum"),
+        dict(
+            common,
+            refId="B",
+            metricName="HTTPCode_Target_5XX_Count",
+            statistic="Sum",
+        ),
+        dict(
+            common,
+            refId="C",
+            metricName="TargetResponseTime",
+            statistic="Average",
+        ),
+    ]
+    if transport is None:
+        transport = request_json
+    payload = transport(
+        "POST",
+        "{0}/api/ds/query".format(grafana_url),
+        token,
+        body={
+            "from": str(start_milliseconds),
+            "to": str(end_milliseconds),
+            "queries": queries,
+        },
+        idempotent=True,
+    )
+    request_count = _cloudwatch_value(
+        payload, "A", start_milliseconds, end_milliseconds
+    )
+    error_count = _cloudwatch_value(
+        payload,
+        "B",
+        start_milliseconds,
+        end_milliseconds,
+        empty_value=Decimal("0"),
+    )
+    latency = _cloudwatch_value(
+        payload, "C", start_milliseconds, end_milliseconds
+    )
+    if request_count <= 0:
+        raise ValueError("Grafana ALB request count must be positive")
+    if error_count < 0 or error_count > request_count:
+        raise ValueError("Grafana ALB error count is invalid")
+    if latency < 0:
+        raise ValueError("Grafana latency must be non-negative")
+    uptime = (Decimal("1") - error_count / request_count) * Decimal("100")
+    return uptime, latency

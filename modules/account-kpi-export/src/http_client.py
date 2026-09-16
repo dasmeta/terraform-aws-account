@@ -83,15 +83,17 @@ def validate_base_url(url, service_name):
 
 def request_json(
     method, url, token, body=None, timeout=15, max_attempts=3,
-    opener=None, sleeper=time.sleep,
+    opener=None, sleeper=time.sleep, idempotent=False,
 ):
-    """Send one JSON request, retrying only transient safe reads."""
+    """Send JSON, retrying transient reads and explicitly idempotent queries."""
 
     method = method.upper()
     if method not in ("GET", "POST"):
         raise ValueError("only GET and POST requests are supported")
     if timeout <= 0 or max_attempts < 1:
         raise ValueError("timeout and max_attempts must be positive")
+    if not isinstance(idempotent, bool):
+        raise ValueError("idempotent must be a boolean")
     _validate_token(token)
     _validate_authenticated_url(url)
     if opener is None:
@@ -109,14 +111,14 @@ def request_json(
             with opener(request, timeout=timeout) as response:
                 return _response_payload(response)
         except HTTPError as error:
-            if method == "POST" and _is_transient_status(error.code):
+            if method == "POST" and not idempotent and _is_transient_status(error.code):
                 raise AmbiguousWriteError(error.code) from None
-            if method == "GET" and _is_transient_status(error.code) and attempt + 1 < max_attempts:
+            if (method == "GET" or idempotent) and _is_transient_status(error.code) and attempt + 1 < max_attempts:
                 sleeper(2 ** attempt)
                 continue
             raise HttpResponseError(error.code) from None
         except (URLError, TimeoutError, OSError, HTTPException):
-            if method == "POST":
+            if method == "POST" and not idempotent:
                 raise AmbiguousWriteError() from None
             if attempt + 1 < max_attempts:
                 sleeper(2 ** attempt)

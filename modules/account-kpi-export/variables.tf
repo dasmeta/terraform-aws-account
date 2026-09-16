@@ -25,26 +25,36 @@ variable "cloudbrowser" {
 variable "application" {
   type = object({
     enabled        = optional(bool, false)
+    source_type    = optional(string, "prometheus")
     grafana_url    = optional(string, "")
     datasource_uid = optional(string, "")
     uptime_query   = optional(string, "")
     latency_query  = optional(string, "")
+    region         = optional(string, "")
+    load_balancer  = optional(string, "")
   })
   default     = {}
-  description = "Production application Grafana source. All connection and query fields are required when enabled."
+  description = "Production application Grafana source. Prometheus queries or CloudWatch ALB settings are required according to source_type."
 
   validation {
     condition = !var.application.enabled || (
       can(regex("^https://[^/:?#@]+(:[0-9]+)?(/[^?#]*)?$", lower(trimspace(var.application.grafana_url)))) &&
       alltrue([
-        for value in [var.application.grafana_url, var.application.datasource_uid, var.application.uptime_query, var.application.latency_query] :
+        for value in [var.application.grafana_url, var.application.datasource_uid] :
         trimspace(value) != ""
-        ]) && alltrue([
-        for query in [var.application.uptime_query, var.application.latency_query] :
-        replace(query, "$__account_kpi_window", "") != query && replace(query, "$__account_kpi_end_seconds", "") != query
-      ])
+        ]) && contains(["prometheus", "cloudwatch_alb"], var.application.source_type) && (
+        var.application.source_type == "prometheus" ? alltrue([
+          for query in [var.application.uptime_query, var.application.latency_query] :
+          trimspace(query) != "" &&
+          replace(query, "$__account_kpi_window", "") != query &&
+          replace(query, "$__account_kpi_end_seconds", "") != query
+          ]) : (
+          trimspace(var.application.region) != "" &&
+          trimspace(var.application.load_balancer) != ""
+        )
+      )
     )
-    error_message = "Enabled application collection requires an HTTPS Grafana base URL with a hostname, optional numeric port, path only, and no userinfo, query, or fragment; non-empty settings; and both $__account_kpi_window and $__account_kpi_end_seconds in each query."
+    error_message = "Enabled application collection requires an HTTPS Grafana base URL, datasource, a supported source_type, and either Prometheus queries with both KPI placeholders or CloudWatch ALB region and load-balancer settings."
   }
 }
 

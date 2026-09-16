@@ -22,15 +22,22 @@ locals {
     }
   }
 
+  application_configuration = merge({
+    enabled        = true
+    source_type    = var.application.source_type
+    grafana_url    = var.application.grafana_url
+    datasource_uid = var.application.datasource_uid
+    token_key      = var.cloudbrowser.grafana_token_key
+    }, var.application.source_type == "prometheus" ? {
+    uptime_query  = var.application.uptime_query
+    latency_query = var.application.latency_query
+    } : {
+    region        = var.application.region
+    load_balancer = var.application.load_balancer
+  })
+
   config_json = var.application.enabled ? jsonencode(merge(local.handler_configuration, {
-    application = {
-      enabled        = true
-      grafana_url    = var.application.grafana_url
-      datasource_uid = var.application.datasource_uid
-      uptime_query   = var.application.uptime_query
-      latency_query  = var.application.latency_query
-      token_key      = var.cloudbrowser.grafana_token_key
-    }
+    application = local.application_configuration
     })) : jsonencode(merge(local.handler_configuration, {
     application = {
       enabled = false

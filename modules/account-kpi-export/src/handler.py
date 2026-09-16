@@ -10,7 +10,12 @@ from urllib.error import HTTPError, URLError
 
 from aws_metrics import collect_cost, collect_security_score
 from cloudbrowser import AccountResolutionError, CloudBrowserClient, MetricConflictError
-from grafana import END_SECONDS_PLACEHOLDER, WINDOW_PLACEHOLDER, collect_application_metrics
+from grafana import (
+    END_SECONDS_PLACEHOLDER,
+    WINDOW_PLACEHOLDER,
+    collect_application_metrics,
+    collect_cloudwatch_alb_metrics,
+)
 from http_client import AmbiguousWriteError, HttpResponseError
 from reporting_period import previous_week
 
@@ -18,7 +23,16 @@ from reporting_period import previous_week
 _ACCOUNT_ARN = re.compile(r"^arn:[^:]+:lambda:[^:]+:(\d{12}):function:[^:]+(?:[:].*)?$")
 _EVENTS = {"application", "aws"}
 _CONFIG_KEYS = {"timezone", "cloudbrowser", "application", "cost", "security", "metrics"}
-_APPLICATION_KEYS = {"enabled", "grafana_url", "datasource_uid", "uptime_query", "latency_query", "token_key"}
+_APPLICATION_COMMON_KEYS = {
+    "enabled", "source_type", "grafana_url", "datasource_uid", "token_key"
+}
+_APPLICATION_PROMETHEUS_KEYS = _APPLICATION_COMMON_KEYS | {
+    "uptime_query", "latency_query"
+}
+_APPLICATION_CLOUDWATCH_ALB_KEYS = _APPLICATION_COMMON_KEYS | {
+    "region", "load_balancer"
+}
+_APPLICATION_KEYS = _APPLICATION_PROMETHEUS_KEYS | _APPLICATION_CLOUDWATCH_ALB_KEYS
 _CONFIG_GROUPS = {
     "cloudbrowser": {"base_url", "client_id", "aws_provider_id", "token_key"},
     "cost": {"enabled"},
@@ -54,6 +68,10 @@ _MALFORMED_RESPONSE_MESSAGES = frozenset(
         "Grafana scalar result must contain one value",
         "Grafana vector result is malformed",
         "Grafana vector series must contain one value",
+        "Grafana CloudWatch response is malformed",
+        "Grafana CloudWatch query was unsuccessful",
+        "Grafana CloudWatch query must return exactly one series",
+        "Grafana CloudWatch query must return one in-window value",
     }
 )
 
@@ -113,18 +131,35 @@ def _configuration(environment):
         or not isinstance(application["enabled"], bool)
     ):
         _invalid_config()
-    if application["enabled"] and (
-        set(application) != _APPLICATION_KEYS
-        or not all(
-            _nonempty_string(application[key])
-            for key in ("grafana_url", "datasource_uid", "uptime_query", "latency_query", "token_key")
-        )
-        or not all(
-            _valid_grafana_query_template(application[key])
-            for key in ("uptime_query", "latency_query")
-        )
-    ):
-        _invalid_config()
+    if application["enabled"]:
+        if not all(
+            _nonempty_string(application.get(key))
+            for key in (
+                "source_type", "grafana_url", "datasource_uid", "token_key"
+            )
+        ):
+            _invalid_config()
+        source_type = application["source_type"]
+        if source_type == "prometheus":
+            if (
+                set(application) != _APPLICATION_PROMETHEUS_KEYS
+                or not all(
+                    _valid_grafana_query_template(application.get(key))
+                    for key in ("uptime_query", "latency_query")
+                )
+            ):
+                _invalid_config()
+        elif source_type == "cloudwatch_alb":
+            if (
+                set(application) != _APPLICATION_CLOUDWATCH_ALB_KEYS
+                or not all(
+                    _nonempty_string(application.get(key))
+                    for key in ("region", "load_balancer")
+                )
+            ):
+                _invalid_config()
+        else:
+            _invalid_config()
     if not isinstance(config["cost"]["enabled"], bool):
         _invalid_config()
     if not isinstance(config["security"]["enabled"], bool) or not _nonempty_string(config["security"]["region"]):
@@ -385,12 +420,23 @@ def handle(event, context, environment=None, now=None, clients=None, factories=N
     if job == "application":
         uptime_entry, latency_entry = entries
         try:
-            collector = clients.get("application_collector", collect_application_metrics)
-            uptime, latency = collector(
-                application["grafana_url"], application["datasource_uid"], application["uptime_query"],
-                application["latency_query"], window.start_utc, window.end_utc,
-                tokens[application["token_key"]],
-            )
+            collector = clients.get("application_collector")
+            if application["source_type"] == "prometheus":
+                collector = collector or collect_application_metrics
+                uptime, latency = collector(
+                    application["grafana_url"], application["datasource_uid"],
+                    application["uptime_query"], application["latency_query"],
+                    window.start_utc, window.end_utc,
+                    tokens[application["token_key"]],
+                )
+            else:
+                collector = collector or collect_cloudwatch_alb_metrics
+                uptime, latency = collector(
+                    application["grafana_url"], application["datasource_uid"],
+                    application["region"], application["load_balancer"],
+                    window.start_utc, window.end_utc,
+                    tokens[application["token_key"]],
+                )
             uptime, latency = _application_pair(uptime, latency)
             rounded = {"uptime": _round_number(uptime, 6), "latency": _round_number(latency, 6)}
         except Exception as error:
