@@ -15,7 +15,7 @@ from fakes import (
 )
 
 
-RECORD_DATE = "2026-09-08T20:00:00.000Z"
+RECORD_DATE = "2026-09-09T00:00:00.000Z"
 
 
 class CloudBrowserTests(unittest.TestCase):
@@ -97,7 +97,9 @@ class CloudBrowserTests(unittest.TestCase):
         self.assertEqual(query["filters[account][id][$eq]"], 101)
         self.assertEqual(query["filters[metric][id][$eq]"], 12)
         self.assertEqual(query["filters[client][id][$eq]"], 42)
-        self.assertEqual(query["filters[date][$eq]"], RECORD_DATE)
+        self.assertEqual(query["filters[date][$gte]"], RECORD_DATE)
+        self.assertEqual(query["filters[date][$lt]"], "2026-09-10T00:00:00.000Z")
+        self.assertNotIn("filters[date][$eq]", query)
         self.assertEqual(query["pagination[pageSize]"], "2")
         self.assertEqual(
             self.transport.calls[1]["body"],

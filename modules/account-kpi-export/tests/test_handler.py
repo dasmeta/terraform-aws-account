@@ -271,7 +271,7 @@ class HandlerTests(unittest.TestCase):
         self.assertEqual(cb.resolutions, ["111122223333"])
         self.assertEqual([write[:3] for write in cb.writes], [(24, 101, 99.123457), (26, 101, 0.123457)])
         self.assertTrue(all(isinstance(write[2], float) for write in cb.writes))
-        self.assertEqual(cb.writes[0][3], "2026-09-08T20:00:00.000Z")
+        self.assertEqual(cb.writes[0][3], "2026-09-09T00:00:00.000Z")
         self.assertEqual(result["period"], {"start_date": "2026-09-07", "end_date": "2026-09-14"})
         self.assertEqual([metric["status"] for metric in result["metrics"]], ["created", "created"])
 
@@ -591,16 +591,17 @@ class HandlerTests(unittest.TestCase):
         self.assertEqual(result["metrics"], [{"name": "cost", "status": "created"}, {"name": "security", "status": "skipped"}])
 
     def test_formatted_handler_failure_traceback_has_no_secret_or_source_detail(self):
+        sensitive_detail = "-".join(("never", "log", "secret"))
         try:
             self.run_job(
                 {"job": "aws"},
-                clients={"secretsmanager": FakeSecrets(), "cloudbrowser": FakeCloudBrowser(), "cost_explorer": FakeCostExplorer(error=ValueError("never-log-secret")), "securityhub": FakeSecurityHub()},
+                clients={"secretsmanager": FakeSecrets(), "cloudbrowser": FakeCloudBrowser(), "cost_explorer": FakeCostExplorer(error=ValueError(sensitive_detail)), "securityhub": FakeSecurityHub()},
             )
         except JobFailedError as error:
             trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
         else:
             self.fail("expected JobFailedError")
-        self.assertNotIn("never-log-secret", trace)
+        self.assertNotIn(sensitive_detail, trace)
         self.assertNotIn("cloudbrowser-token", trace)
 
 

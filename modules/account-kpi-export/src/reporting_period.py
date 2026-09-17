@@ -37,12 +37,12 @@ def previous_week(now: datetime, timezone_name: str) -> ReportingWindow:
 
     start_local = datetime.combine(start_date, time.min, tzinfo=local_zone)
     end_local = datetime.combine(end_date, time.min, tzinfo=local_zone)
-    record_local = datetime.combine(record_local_date, time.min, tzinfo=local_zone)
+    record_utc = datetime.combine(record_local_date, time.min, tzinfo=timezone.utc)
 
     return ReportingWindow(
         start_date=start_date,
         end_date=end_date,
         start_utc=start_local.astimezone(timezone.utc),
         end_utc=end_local.astimezone(timezone.utc),
-        record_date=_as_utc_iso_milliseconds(record_local),
+        record_date=_as_utc_iso_milliseconds(record_utc),
     )

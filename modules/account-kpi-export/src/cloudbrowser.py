@@ -1,5 +1,6 @@
 """CloudBrowser account lookup and immutable metric-data writes."""
 
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
@@ -47,6 +48,18 @@ def _decimal(value):
         raise MetricConflictError("CloudBrowser metric value is not numeric")
 
 
+def _next_utc_day(value):
+    try:
+        parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=timezone.utc
+        )
+    except (TypeError, ValueError):
+        raise ValueError("CloudBrowser metric date is invalid") from None
+    return (parsed + timedelta(days=1)).isoformat(timespec="milliseconds").replace(
+        "+00:00", "Z"
+    )
+
+
 class CloudBrowserClient:
     """Operations that preserve CloudBrowser's immutable weekly metric evidence."""
 
@@ -91,7 +104,8 @@ class CloudBrowserClient:
             "filters[metric][id][$eq]": metric_id,
             "filters[client][id][$eq]": self.client_id,
             "filters[account][id][$eq]": account_id,
-            "filters[date][$eq]": record_date,
+            "filters[date][$gte]": record_date,
+            "filters[date][$lt]": _next_utc_day(record_date),
             "pagination[pageSize]": 2,
         }))
 
