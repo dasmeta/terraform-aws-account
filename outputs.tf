@@ -22,3 +22,17 @@ output "account_kpi_export" {
     alarm_arns           = module.account_kpi_export[0].alarm_arns
   } : null
 }
+
+output "account_events_export" {
+  description = "Regional account event export queue and terminal-failure queue identifiers"
+  value = var.account_events_export.enabled ? {
+    primary = {
+      event_queue        = module.account_events_export[0].event_queue_data
+      failed_event_queue = module.account_events_export[0].failed_event_queue_data
+    }
+    virginia = {
+      event_queue        = module.account_events_export_virginia[0].event_queue_data
+      failed_event_queue = module.account_events_export_virginia[0].failed_event_queue_data
+    }
+  } : null
+}

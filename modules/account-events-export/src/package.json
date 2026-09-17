@@ -1,3 +1,8 @@
 {
-  "name": "account-events-export"
+  "name": "account-events-export",
+  "private": true,
+  "scripts": {
+    "build": "rm -f ../account-events-export-lambda.zip && zip -X -q ../account-events-export-lambda.zip README.md index.js package-lock.json package.json",
+    "test": "node --test index.test.js terraform.test.js"
+  }
 }
