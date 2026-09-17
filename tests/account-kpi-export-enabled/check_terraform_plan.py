@@ -77,8 +77,8 @@ def check_shared_contract(plan):
     )
     require(function["publish"] is False, "The unaliased Lambda must not publish unused versions")
     require(
-        function["tracing_config"] == [{"mode": "Active"}],
-        "The enabled root exporter must activate Lambda X-Ray tracing",
+        function["tracing_config"] == [{"mode": "PassThrough"}],
+        "The enabled root exporter must keep Lambda X-Ray tracing disabled",
     )
     environment = function["environment"][0]["variables"]
     require(

@@ -35,7 +35,7 @@ def check_plan(plan):
     require(function["handler"] == "handler.lambda_handler" and function["runtime"] == "python3.13", "Lambda entry point drifted")
     require(function["timeout"] == 600 and function["memory_size"] == 256, "Lambda runtime bounds drifted")
     require(function["publish"] is False and function["filename"].endswith("account-kpi-export-lambda.zip"), "Lambda package wiring drifted")
-    require(function["tracing_config"] == [{"mode": "Active"}], "Lambda X-Ray active tracing is not enabled")
+    require(function["tracing_config"] == [{"mode": "PassThrough"}], "Lambda X-Ray tracing must remain disabled")
     require(all(vpc["subnet_ids"] == [] and vpc["security_group_ids"] == [] for vpc in function["vpc_config"]), "The collector must remain outside a VPC")
     environment = function["environment"][0]["variables"]
     require(set(environment) == {"CONFIG_JSON", "SECRET_ARN"} and environment["SECRET_ARN"] == SECRET_ARN, "Lambda environment or secret reference drifted")
@@ -89,13 +89,10 @@ def check_plan(plan):
     indexed = {resource["address"]: resource["change"]["after"] for resource in resources}
     lambda_policy = indexed["module.lambda_function.aws_iam_role_policy.additional_inline[0]"]
     require(lambda_policy["role"] == function["function_name"] and json.loads(lambda_policy["policy"])["Id"] == LAMBDA_POLICY_ID, "Lambda custom statement document is not attached to the collector role")
-    tracing_policy = indexed["module.lambda_function.aws_iam_role_policy.tracing[0]"]
-    tracing_document = json.loads(tracing_policy["policy"])
-    require(tracing_policy["role"] == function["function_name"], "Lambda X-Ray write policy is not attached to the collector role")
-    require(set(tracing_document["Statement"][0]["Action"]) == {
-        "xray:PutTraceSegments", "xray:PutTelemetryRecords", "xray:GetSamplingRules",
-        "xray:GetSamplingTargets", "xray:GetSamplingStatisticSummaries"
-    }, "Lambda X-Ray write policy actions drifted")
+    require(
+        "module.lambda_function.aws_iam_role_policy.tracing[0]" not in indexed,
+        "Lambda X-Ray write policy must not be attached",
+    )
     scheduler_policy = indexed["module.scheduler.aws_iam_policy.additional_inline[0]"]
     require(json.loads(scheduler_policy["policy"])["Id"] == SCHEDULER_POLICY_ID, "Scheduler custom statement document is not attached")
     scheduler_attachment = indexed["module.scheduler.aws_iam_policy_attachment.additional_inline[0]"]

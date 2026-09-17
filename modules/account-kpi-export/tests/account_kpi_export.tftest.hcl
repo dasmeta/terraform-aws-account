@@ -56,11 +56,6 @@ mock_provider "aws" {
     }
   }
 
-  mock_data "aws_iam_policy" {
-    defaults = {
-      policy = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"xray:PutTraceSegments\",\"xray:PutTelemetryRecords\",\"xray:GetSamplingRules\",\"xray:GetSamplingTargets\",\"xray:GetSamplingStatisticSummaries\"],\"Resource\":\"*\"}]}"
-    }
-  }
 }
 
 mock_provider "external" {}
@@ -126,11 +121,6 @@ mock_provider "aws" {
     }
   }
 
-  mock_data "aws_iam_policy" {
-    defaults = {
-      policy = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"xray:PutTraceSegments\",\"xray:PutTelemetryRecords\",\"xray:GetSamplingRules\",\"xray:GetSamplingTargets\",\"xray:GetSamplingStatisticSummaries\"],\"Resource\":\"*\"}]}"
-    }
-  }
 }
 
 variables {
@@ -165,8 +155,6 @@ run "aws_only_contract" {
       runtime                                   = "python3.13"
       timeout                                   = 600
       memory_size                               = 256
-      tracing_mode                              = "Active"
-      attach_tracing_policy                     = true
       reserved_concurrent_executions            = 1
       cloudwatch_logs_retention_days            = 30
       create_package                            = false
