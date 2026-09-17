@@ -287,6 +287,14 @@ variable "account_events_export" {
       name                = optional(string, "default")                                                                                                                                                                                                                                                                                                                                                                                                                                       # the bus name, default bus pre-exist and we can use it
       rule_pattern_source = optional(list(string), ["aws.ec2", "aws.s3", "aws.rds", "aws.eks", "aws.sqs", "aws.lambda", "aws.iam", "aws.vpc", "custom.test", "aws.route53", "aws.cloudfront", "aws.acm", "aws.cloudwatch", "aws.amplify", "aws.health", "aws.securityhub", "aws.budgets", "aws.secretsmanager", "aws.events", "aws.autoscaling", "aws.elasticache", "aws.elb", "aws.amazonmq", "aws.apigateway", "aws.waf", "aws.waf-regional", "aws.savingsplans", "aws.opensearchservice"]) # The list of aws services to capture and stream/export event, for available event sources check https://docs.aws.amazon.com/eventbridge/latest/ref/events.html
     }), {})
+    delivery = optional(object({
+      maximum_concurrency       = optional(number, 2)
+      webhook_timeout_seconds   = optional(number, 10)
+      lambda_timeout_seconds    = optional(number, 15)
+      message_retention_seconds = optional(number, 1209600)
+      dlq_retention_seconds     = optional(number, 1209600)
+      max_receive_count         = optional(number, 100) # about 2.5 hours with the default 90-second visibility timeout
+    }), {})
   })
   default     = {}
   description = "Allows to configure and stream aws account important events to specified `webhook_endpoint`, NOTE: webhook_endpoint is required when enabling this"
