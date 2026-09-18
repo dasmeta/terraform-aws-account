@@ -11,6 +11,18 @@ output "users" {
   sensitive = true
 }
 
+output "account_kpi_export" {
+  description = "Operational Lambda, schedule, failure queue, and alarm identifiers; null when the weekly KPI exporter is disabled."
+  value = var.account_kpi_export.enabled ? {
+    lambda_function_arn  = module.account_kpi_export[0].lambda_function_arn
+    lambda_function_name = module.account_kpi_export[0].lambda_function_name
+    schedule_arns        = module.account_kpi_export[0].schedule_arns
+    failure_queue_arn    = module.account_kpi_export[0].failure_queue_arn
+    failure_queue_url    = module.account_kpi_export[0].failure_queue_url
+    alarm_arns           = module.account_kpi_export[0].alarm_arns
+  } : null
+}
+
 output "account_events_export" {
   description = "Regional account event export queue and terminal-failure queue identifiers"
   value = var.account_events_export.enabled ? {
