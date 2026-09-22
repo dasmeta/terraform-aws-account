@@ -14,7 +14,7 @@ CUSTOM_ACTION_ARN = "arn:aws:sns:eu-central-1:111122223333:example-custom-kpi-al
 ACCOUNT_ACTION_ARN = "arn:aws:sns:eu-central-1:111122223333:example-account-alarms"
 KPI_PREFIX = "module.this.module.account_kpi_export[0]."
 UPTIME_QUERY = (
-    '100 * sum(increase(nginx_ingress_controller_requests{status!~"5..", '
+    '100 * sum(increase(nginx_ingress_controller_requests{status!~"5..|499", '
     'namespace="production", ingress=~"api|web"}[$__account_kpi_window] @ '
     '$__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests'
     '{namespace="production", ingress=~"api|web"}[$__account_kpi_window] @ '
@@ -22,9 +22,9 @@ UPTIME_QUERY = (
 )
 LATENCY_QUERY = (
     'sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~'
-    '"2..|3..", namespace="production", ingress=~"api|web"}'
+    '"2..|3..|429|499", namespace="production", ingress=~"api|web"}'
     '[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase('
-    'nginx_ingress_controller_request_duration_seconds_count{status=~"2..|3..", '
+    'nginx_ingress_controller_request_duration_seconds_count{status=~"2..|3..|429|499", '
     'namespace="production", ingress=~"api|web"}[$__account_kpi_window] @ '
     '$__account_kpi_end_seconds))'
 )

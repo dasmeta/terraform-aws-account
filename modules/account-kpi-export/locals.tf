@@ -2,8 +2,8 @@ locals {
   application_query_profile        = trimspace(var.application.query_profile)
   application_metric_filter        = trimspace(var.application.metric_filter)
   application_metric_filter_suffix = local.application_metric_filter == "" ? "" : ", ${local.application_metric_filter}"
-  nginx_ingress_uptime_query       = "100 * sum(increase(nginx_ingress_controller_requests{status!~\"5..\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests{${local.application_metric_filter}}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
-  nginx_ingress_latency_query      = "sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~\"2..|3..\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_request_duration_seconds_count{status=~\"2..|3..\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
+  nginx_ingress_uptime_query       = "100 * sum(increase(nginx_ingress_controller_requests{status!~\"5..|499\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests{${local.application_metric_filter}}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
+  nginx_ingress_latency_query      = "sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~\"2..|3..|429|499\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_request_duration_seconds_count{status=~\"2..|3..|429|499\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
 
   handler_configuration = {
     timezone = var.schedules.timezone

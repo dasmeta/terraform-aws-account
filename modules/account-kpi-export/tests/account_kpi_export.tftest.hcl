@@ -417,11 +417,11 @@ run "canonical_nginx_application_contract" {
       source_type    = "prometheus"
       grafana_url    = "https://grafana.example.com"
       datasource_uid = "example-prometheus"
-      uptime_query   = "100 * sum(increase(nginx_ingress_controller_requests{status!~\"5..\", namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests{namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
-      latency_query  = "sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~\"2..|3..\", namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_request_duration_seconds_count{status=~\"2..|3..\", namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
+      uptime_query   = "100 * sum(increase(nginx_ingress_controller_requests{status!~\"5..|499\", namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests{namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
+      latency_query  = "sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~\"2..|3..|429|499\", namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_request_duration_seconds_count{status=~\"2..|3..|429|499\", namespace=\"production\", ingress=~\"api|web\"}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
       token_key      = "grafana_api_token"
     }
-    error_message = "Canonical NGINX settings must serialize the exact uptime and weighted average-latency queries for the handler."
+    error_message = "Canonical NGINX settings must keep 499 unavailable for uptime, keep 429 available, and include both statuses in weighted latency."
   }
 }
 
