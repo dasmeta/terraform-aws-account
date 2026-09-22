@@ -13,6 +13,21 @@ SECRET_ARN = "arn:aws:secretsmanager:eu-central-1:111122223333:secret:account-kp
 CUSTOM_ACTION_ARN = "arn:aws:sns:eu-central-1:111122223333:example-custom-kpi-alarms"
 ACCOUNT_ACTION_ARN = "arn:aws:sns:eu-central-1:111122223333:example-account-alarms"
 KPI_PREFIX = "module.this.module.account_kpi_export[0]."
+UPTIME_QUERY = (
+    '100 * sum(increase(nginx_ingress_controller_requests{status!~"5..", '
+    'namespace="production", ingress=~"api|web"}[$__account_kpi_window] @ '
+    '$__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests'
+    '{namespace="production", ingress=~"api|web"}[$__account_kpi_window] @ '
+    '$__account_kpi_end_seconds))'
+)
+LATENCY_QUERY = (
+    'sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~'
+    '"2..|3..", namespace="production", ingress=~"api|web"}'
+    '[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase('
+    'nginx_ingress_controller_request_duration_seconds_count{status=~"2..|3..", '
+    'namespace="production", ingress=~"api|web"}[$__account_kpi_window] @ '
+    '$__account_kpi_end_seconds))'
+)
 OUTPUT_KEYS = {
     "lambda_function_arn",
     "lambda_function_name",
@@ -96,7 +111,15 @@ def check_shared_contract(plan):
                 "aws_provider_id": 77,
                 "token_key": "example_cloudbrowser_token",
             },
-            "application": {"enabled": False},
+            "application": {
+                "enabled": True,
+                "source_type": "prometheus",
+                "grafana_url": "https://grafana.example.com",
+                "datasource_uid": "example-prometheus",
+                "uptime_query": UPTIME_QUERY,
+                "latency_query": LATENCY_QUERY,
+                "token_key": "example_grafana_token",
+            },
             "cost": {"enabled": True},
             "security": {"enabled": False, "region": "eu-west-1"},
             "metrics": {
@@ -126,8 +149,15 @@ def check_shared_contract(plan):
     )
 
     schedules = resources_of_type(plan, "aws_scheduler_schedule")
-    require(len(schedules) == 1, "AWS-only root configuration must plan one schedule")
-    schedule = schedules[0]["change"]["after"]
+    require(
+        len(schedules) == 2,
+        "Application plus AWS root configuration must plan two schedules",
+    )
+    schedules_by_name = {
+        item["change"]["after"]["name"]: item["change"]["after"]
+        for item in schedules
+    }
+    schedule = schedules_by_name["example-kpi-export-wednesday"]
     target = schedule["target"][0]
     require(
         schedule["name"] == "example-kpi-export-wednesday"
@@ -141,6 +171,14 @@ def check_shared_contract(plan):
         == [{"maximum_event_age_in_seconds": 7200, "maximum_retry_attempts": 5}]
         and target["dead_letter_config"] == [{"arn": queue["arn"]}],
         "Wednesday schedule payload, retry policy, or DLQ drifted",
+    )
+    monday = schedules_by_name["example-kpi-export-monday"]
+    monday_target = monday["target"][0]
+    require(
+        monday["schedule_expression"] == "cron(15 7 ? * MON *)"
+        and monday["schedule_expression_timezone"] == "Europe/Zurich"
+        and json.loads(monday_target["input"]) == {"job": "application"},
+        "Monday application schedule was not forwarded",
     )
 
     alarms = resources_of_type(plan, "aws_cloudwatch_metric_alarm")
