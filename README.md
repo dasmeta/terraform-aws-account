@@ -14,7 +14,7 @@ module "account" {
 
 ## Canonical application uptime and latency
 
-For wrappers that decode `account.yaml` into this module's inputs, the application KPI section can use a scoped NGINX ingress metric filter instead of copying PromQL:
+For wrappers that decode `account.yaml` into this module's inputs, the application KPI section can select the NGINX ingress query profile with a scoped metric filter instead of copying PromQL:
 
 ```yaml
 account_kpi_export:
@@ -26,6 +26,7 @@ account_kpi_export:
     enabled: true
     grafana_url: https://grafana.example.com
     datasource_uid: example-prometheus
+    query_profile: nginx_ingress
     metric_filter: 'namespace="production", ingress=~"api|web"'
   cost:
     enabled: false
@@ -38,7 +39,7 @@ This generates the standard weekly queries used by the NGINX SLA/SLO dashboard:
 - uptime percent: non-5xx requests divided by all scoped requests;
 - average latency seconds: total duration divided by request count for scoped 2xx and 3xx responses.
 
-The default CloudBrowser metric relation IDs remain `24` for uptime and `26` for latency. Existing consumers can still provide both `uptime_query` and `latency_query` as an advanced override; providing only one query is rejected.
+The default CloudBrowser metric relation IDs remain `24` for uptime and `26` for average latency. Other Prometheus schemas remain source-agnostic by leaving `query_profile` and `metric_filter` empty and providing both `uptime_query` and `latency_query`; filter-only, mixed-profile, and one-query configurations are rejected. A p95 needs a separately named CloudBrowser metric and is not exported as `Latency(avg)`.
 
 ## upgrade guide
 - from <=1.3.7 to >=1.3.8

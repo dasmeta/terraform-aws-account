@@ -2,22 +2,23 @@
 
 ## Goal
 
-Allow `account.yaml` consumers to select the standard NGINX ingress uptime and latency definitions with a compact metric scope while preserving the existing advanced raw-query escape hatch.
+Allow `account.yaml` consumers to select the standard NGINX ingress uptime and latency definitions with an explicit profile and compact metric scope while preserving the source-agnostic raw-query escape hatch.
 
 ## Consumer contract
 
-The existing grouped `account_kpi_export.application` object gains one optional field:
+The existing grouped `account_kpi_export.application` object gains explicit optional profile settings:
 
 ```hcl
+query_profile = "nginx_ingress"
 metric_filter = "namespace=\"production\", ingress=~\"api|web\""
 ```
 
 For a Prometheus source, consumers choose exactly one mode:
 
-1. Canonical mode: omit both raw queries and provide a non-empty `metric_filter`.
-2. Override mode: provide both `uptime_query` and `latency_query`, each containing the existing window and end-time placeholders.
+1. NGINX profile mode: set `query_profile = "nginx_ingress"`, omit both raw queries, and provide a non-empty `metric_filter`.
+2. Raw mode: leave `query_profile` and `metric_filter` empty and provide both `uptime_query` and `latency_query`, each containing the existing window and end-time placeholders.
 
-Providing only one raw query is invalid. If a complete raw pair is present it wins, preserving all existing consumers. `cloudwatch_alb` behavior is unchanged.
+Providing only a metric filter, an unknown profile, a profile mixed with raw queries, or only one raw query is invalid. `cloudwatch_alb` behavior is unchanged.
 
 ## Generated query contract
 
@@ -42,9 +43,10 @@ Terraform materializes these strings into the existing runtime configuration. Th
 - Existing `source_type = "prometheus"` and raw queries are unchanged.
 - Existing CloudWatch ALB collection is unchanged.
 - Metric IDs remain uptime 24 and latency 26 by default.
+- Metric 26 remains request-weighted average latency in seconds. A p95 must use a separately named metric and is not introduced here.
 - No handler, schedule, IAM, or CloudBrowser API behavior changes.
 - The new optional field narrows routine MSP configuration; it does not expose a broad provider surface.
 
 ## Validation
 
-Terraform tests will start red by expecting canonical generation. They will cover generated strings, raw-query precedence, partial-query rejection, and root-to-child forwarding. Existing Python tests verify that the runtime still substitutes boundaries and validates returned values.
+Terraform tests will cover generated strings, raw-query compatibility, implicit/unknown/mixed/partial-mode rejection, and root-to-child forwarding. Existing Python tests verify that the runtime still substitutes boundaries and validates returned values.

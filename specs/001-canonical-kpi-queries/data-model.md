@@ -6,6 +6,7 @@
 - `source_type`: existing Prometheus or CloudWatch ALB source
 - `grafana_url`: HTTPS Grafana endpoint
 - `datasource_uid`: Grafana data source identifier
+- `query_profile`: optional explicit built-in query schema; currently only `nginx_ingress`
 - `metric_filter`: optional NGINX label matcher fragment used by canonical mode
 - `uptime_query`: optional advanced override
 - `latency_query`: optional advanced override
@@ -13,11 +14,11 @@
 
 ## Mode Rules
 
-- Canonical Prometheus: both queries empty; `metric_filter` non-empty.
-- Override Prometheus: both queries non-empty and each has both time-boundary placeholders; `metric_filter` may be present but is ignored.
-- Invalid Prometheus: exactly one query is non-empty, or all three canonical/override inputs are empty.
+- Profile Prometheus: `query_profile = "nginx_ingress"`, both queries empty, and `metric_filter` non-empty.
+- Raw Prometheus: `query_profile` and `metric_filter` empty; both queries non-empty and each has both time-boundary placeholders.
+- Invalid Prometheus: filter without a profile, unknown profile, profile mixed with raw queries, exactly one query, or all profile/raw inputs empty.
 - CloudWatch ALB: existing region/load-balancer rules; Prometheus query fields do not participate.
 
 ## Runtime Configuration
 
-The existing runtime application object always receives explicit `uptime_query` and `latency_query` in Prometheus mode. Canonical/override selection is not exposed to the Lambda.
+The existing runtime application object always receives explicit `uptime_query` and `latency_query` in Prometheus mode. Profile/raw selection is not exposed to the Lambda.

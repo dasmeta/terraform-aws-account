@@ -4,7 +4,7 @@
 
 ## Summary
 
-Extend the existing grouped application settings with an optional NGINX ingress metric filter. When both raw Prometheus queries are omitted, derive the corrected Grafana uptime and average-latency queries with the collector's exact-window placeholders. Preserve complete raw-query pairs and all CloudWatch ALB behavior.
+Extend the existing grouped application settings with an explicit optional query profile plus a profile-specific metric filter. When `query_profile = "nginx_ingress"` and both raw Prometheus queries are omitted, derive the corrected Grafana uptime and average-latency queries with the collector's exact-window placeholders. Preserve complete raw-query pairs and all CloudWatch ALB behavior.
 
 ## Technical Context
 
@@ -26,14 +26,14 @@ Extend the existing grouped application settings with an optional NGINX ingress 
 - Module-change gate: expected to pass after package and implementation are committed.
 - Current state: the opinionated exporter accepts a grouped application object but requires consumers to copy both queries.
 - Standards gap: routine MSP consumers lack a safe derived default; examples use placeholder queries unrelated to the dashboard.
-- Wrapper preservation: one optional field is added inside the existing grouped object; existing raw-query and CloudWatch modes remain unchanged.
-- Grouped/optional mapping: `metric_filter` is optional because legacy raw-query and CloudWatch consumers do not need it.
+- Wrapper preservation: two optional fields are used inside the existing grouped object; existing raw-query and CloudWatch modes remain unchanged.
+- Grouped/optional mapping: `query_profile` and `metric_filter` are optional because raw-query and CloudWatch consumers do not need them.
 - Repository convention: provider declarations remain in `versions.tf`; no version constraints change.
 - Governance source: `terraform-module-developer` constitution references.
 - Modern Capabilities Rule: extend mode; canonical PromQL generation is **supported** by the existing Prometheus/Grafana platform and Terraform optional object attributes already allowed by `~> 1.3`.
 - Provider collection/upstream candidate review: not applicable; no new resource or module is created.
 - Potential breaking changes: none. A complete raw query pair keeps precedence and serialization.
-- Interface widening: bounded one-field extension for the common MSP use case, explicitly requested and approved.
+- Interface widening: bounded explicit-profile extension for the common MSP use case, explicitly requested and approved.
 - Conflicts requiring approval: none.
 
 ## Project Structure
@@ -72,17 +72,18 @@ tests/
 
 ## Design Decisions
 
-1. Add `metric_filter` rather than a new source type. It is the smallest backward-compatible input and keeps Prometheus behavior in one mode.
-2. Canonical mode is selected only when both raw queries are empty. Override mode requires both queries and existing boundary placeholders.
-3. Reject one-query configurations even when a metric filter exists; never mix canonical and custom halves.
-4. Trim the metric filter before insertion and require it to be non-empty in canonical mode, preventing cross-tenant/global aggregation by default.
+1. Add `query_profile = "nginx_ingress"` alongside `metric_filter`; a generic Prometheus source never implies an NGINX metric schema.
+2. Profile mode is selected only when the supported profile is explicit and both raw queries are empty. Raw mode requires an empty profile, an empty profile-only filter, both queries, and existing boundary placeholders.
+3. Reject unknown profiles, filter-only configurations, profile-plus-raw configurations, and one-query configurations; never mix generated and custom halves.
+4. Trim the metric filter before insertion and require it to be non-empty in NGINX profile mode, preventing cross-tenant/global aggregation by default.
 5. Serialize generated queries as `source_type = "prometheus"`; no Python handler change is needed.
+6. Keep request-weighted average latency because CloudBrowser metric 26 is `Latency(avg)`; p95 requires a separate metric contract and is out of scope.
 
 ## Proposed File Changes
 
-- Add and validate `metric_filter` in root and child `application` object variables.
-- Forward `metric_filter` through the root module call.
-- Derive canonical query strings in child locals and keep explicit-pair precedence.
-- Add red/green Terraform tests for generated strings, override compatibility, and partial-query rejection.
+- Add and validate `query_profile` and `metric_filter` in root and child `application` object variables.
+- Forward both fields through the root module call.
+- Derive profile query strings in child locals and keep raw pairs unchanged in their exclusive mode.
+- Add red/green Terraform tests for generated strings, override compatibility, and implicit/unknown/mixed/partial-mode rejection.
 - Update neutral examples and generated module documentation to show canonical mode.
 - Do not change metric IDs, Lambda code/package, IAM, schedules, or CloudBrowser writes.

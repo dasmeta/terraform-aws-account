@@ -352,6 +352,7 @@ run "canonical_nginx_application_contract" {
       enabled        = true
       grafana_url    = "https://grafana.example.com"
       datasource_uid = "example-prometheus"
+      query_profile  = "nginx_ingress"
       metric_filter  = " namespace=\"production\", ingress=~\"api|web\" "
     }
     cost = {
@@ -374,6 +375,55 @@ run "canonical_nginx_application_contract" {
     }
     error_message = "Canonical NGINX settings must serialize the exact uptime and weighted average-latency queries for the handler."
   }
+}
+
+run "application_rejects_metric_filter_without_query_profile" {
+  command = plan
+
+  variables {
+    application = {
+      enabled        = true
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "example-prometheus"
+      metric_filter  = "namespace=\"production\""
+    }
+  }
+
+  expect_failures = [var.application]
+}
+
+run "application_rejects_unknown_query_profile" {
+  command = plan
+
+  variables {
+    application = {
+      enabled        = true
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "example-prometheus"
+      query_profile  = "unknown"
+      metric_filter  = "namespace=\"production\""
+    }
+  }
+
+  expect_failures = [var.application]
+}
+
+run "application_rejects_query_profile_with_raw_queries" {
+  command = plan
+
+  variables {
+    application = {
+      enabled        = true
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "example-prometheus"
+      query_profile  = "nginx_ingress"
+      metric_filter  = "namespace=\"production\""
+      uptime_query   = "100 * avg_over_time(up[$__account_kpi_window] @ $__account_kpi_end_seconds)"
+      latency_query  = "avg_over_time(request_duration_seconds_sum[$__account_kpi_window] @ $__account_kpi_end_seconds)"
+    }
+  }
+
+  expect_failures = [var.application]
 }
 
 run "cloudwatch_alb_application_contract" {

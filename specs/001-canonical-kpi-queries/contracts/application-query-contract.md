@@ -7,6 +7,7 @@ application = {
   enabled        = true
   grafana_url    = "https://grafana.example.com"
   datasource_uid = "example-prometheus"
+  query_profile  = "nginx_ingress"
   metric_filter  = "namespace=\"production\", ingress=~\"api|web\""
 }
 ```
@@ -25,4 +26,4 @@ sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~"2..|
 
 ## Compatibility
 
-A complete `uptime_query` plus `latency_query` pair is serialized byte-for-byte as before. Existing `source_type = "cloudwatch_alb"` is unchanged.
+A complete `uptime_query` plus `latency_query` pair with an empty `query_profile` and `metric_filter` is serialized byte-for-byte as before. A metric filter alone does not imply NGINX. Existing `source_type = "cloudwatch_alb"` is unchanged.

@@ -14,10 +14,10 @@
 
 **Independent Test**: Canonical input produces exact explicit runtime queries and the existing application schedule.
 
-- [x] T005 [US1] Add optional root `metric_filter` and mode validation in `variables.tf`
-- [x] T006 [US1] Verify the existing whole-object forwarding in `account-kpi-export.tf` carries the optional field without a separate mapping
-- [x] T007 [US1] Add optional child `metric_filter` and mode validation in `modules/account-kpi-export/variables.tf`
-- [x] T008 [US1] Generate canonical queries with raw-pair precedence in `modules/account-kpi-export/locals.tf`
+- [x] T005 [US1] Add optional root `query_profile`/`metric_filter` and mode validation in `variables.tf`
+- [x] T006 [US1] Verify the existing whole-object forwarding in `account-kpi-export.tf` carries the optional fields without a separate mapping
+- [x] T007 [US1] Add optional child `query_profile`/`metric_filter` and mode validation in `modules/account-kpi-export/variables.tf`
+- [x] T008 [US1] Generate canonical queries only from the explicit NGINX profile in `modules/account-kpi-export/locals.tf`
 - [x] T009 [US1] Run canonical and legacy contract tests to green
 
 ## Phase 3: User Story 2 - Prevent ambiguous query configuration (Priority: P2)
@@ -34,6 +34,15 @@
 - [x] T014 Run `terraform fmt -recursive` and `terraform fmt -check -recursive`
 - [x] T015 Run targeted Terraform tests and `python3 -W error::ResourceWarning -m unittest discover -s modules/account-kpi-export/tests -p 'test_*.py'`
 - [x] T016 Inspect the final diff for backward compatibility, no customer identifiers, no new metric IDs, and no Lambda/package changes
+
+## Phase 5: Review Correction - Explicit Source Profile
+
+- [x] T017 [US2] Add failing child and root tests proving a metric filter alone, unknown profiles, and profile-plus-raw input are rejected
+- [x] T018 [US1] Add `query_profile` to canonical child/root fixtures and verify the canonical tests remain valid
+- [x] T019 [US1] Add optional `query_profile` and exclusive profile/raw validation at both Terraform boundaries
+- [x] T020 [US1] Select NGINX query generation only from the explicit `nginx_ingress` profile
+- [x] T021 Update the account YAML example and design contract with the explicit profile
+- [x] T022 Run the complete targeted Terraform/Python verification and inspect the final diff
 
 ## Dependencies and Execution Order
 
