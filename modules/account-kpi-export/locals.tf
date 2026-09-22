@@ -1,4 +1,13 @@
 locals {
+  application_metric_filter        = trimspace(var.application.metric_filter)
+  application_metric_filter_suffix = local.application_metric_filter == "" ? "" : ", ${local.application_metric_filter}"
+  application_has_query_override = alltrue([
+    for query in [var.application.uptime_query, var.application.latency_query] :
+    trimspace(query) != ""
+  ])
+  canonical_uptime_query  = "100 * sum(increase(nginx_ingress_controller_requests{status!~\"5..\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_requests{${local.application_metric_filter}}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
+  canonical_latency_query = "sum(increase(nginx_ingress_controller_request_duration_seconds_sum{status=~\"2..|3..\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds)) / sum(increase(nginx_ingress_controller_request_duration_seconds_count{status=~\"2..|3..\"${local.application_metric_filter_suffix}}[$__account_kpi_window] @ $__account_kpi_end_seconds))"
+
   handler_configuration = {
     timezone = var.schedules.timezone
     cloudbrowser = {
@@ -29,8 +38,8 @@ locals {
     datasource_uid = var.application.datasource_uid
     token_key      = var.cloudbrowser.grafana_token_key
     }, var.application.source_type == "prometheus" ? {
-    uptime_query  = var.application.uptime_query
-    latency_query = var.application.latency_query
+    uptime_query  = local.application_has_query_override ? var.application.uptime_query : local.canonical_uptime_query
+    latency_query = local.application_has_query_override ? var.application.latency_query : local.canonical_latency_query
     } : {
     region        = var.application.region
     load_balancer = var.application.load_balancer

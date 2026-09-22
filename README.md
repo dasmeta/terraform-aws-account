@@ -12,6 +12,34 @@ module "account" {
 }
 ```
 
+## Canonical application uptime and latency
+
+For wrappers that decode `account.yaml` into this module's inputs, the application KPI section can use a scoped NGINX ingress metric filter instead of copying PromQL:
+
+```yaml
+account_kpi_export:
+  enabled: true
+  cloudbrowser:
+    client_id: 42
+    secret_arn: arn:aws:secretsmanager:eu-central-1:111122223333:secret:account-kpi-example
+  application:
+    enabled: true
+    grafana_url: https://grafana.example.com
+    datasource_uid: example-prometheus
+    metric_filter: 'namespace="production", ingress=~"api|web"'
+  cost:
+    enabled: false
+  security:
+    enabled: false
+```
+
+This generates the standard weekly queries used by the NGINX SLA/SLO dashboard:
+
+- uptime percent: non-5xx requests divided by all scoped requests;
+- average latency seconds: total duration divided by request count for scoped 2xx and 3xx responses.
+
+The default CloudBrowser metric relation IDs remain `24` for uptime and `26` for latency. Existing consumers can still provide both `uptime_query` and `latency_query` as an advanced override; providing only one query is rejected.
+
 ## upgrade guide
 - from <=1.3.7 to >=1.3.8
   - if you have had `cost_report_export` and `account_events_export` used it is possible that after update to new version it will show some additional delete/create resources and will fail at firs apply. This is ok and there is need to plan apply one more time to get the needed resources related to account cost and events export created.
