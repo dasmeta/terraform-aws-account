@@ -136,6 +136,45 @@ class CollectCostTests(unittest.TestCase):
             ],
         )
 
+    def test_collect_cost_organization_scope_omits_account_filter_and_sums_totals(self):
+        cost_explorer = FakeCostExplorer(
+            [cost_page(*self.weekly_buckets(["10", "20", "30", "40", "50", "60", "70"]))]
+        )
+
+        result = collect_cost(
+            cost_explorer,
+            ACCOUNT_ID,
+            self.start_date,
+            self.end_date,
+            scope="organization",
+        )
+
+        self.assertEqual(result, Decimal("280"))
+        self.assertEqual(
+            cost_explorer.calls,
+            [
+                {
+                    "TimePeriod": {"Start": "2026-09-07", "End": "2026-09-14"},
+                    "Granularity": "DAILY",
+                    "Metrics": ["UnblendedCost"],
+                }
+            ],
+        )
+
+    def test_collect_cost_rejects_unknown_scope_before_calling_aws(self):
+        cost_explorer = FakeCostExplorer([])
+
+        with self.assertRaisesRegex(ValueError, "scope"):
+            collect_cost(
+                cost_explorer,
+                ACCOUNT_ID,
+                self.start_date,
+                self.end_date,
+                scope="unknown",
+            )
+
+        self.assertEqual(cost_explorer.calls, [])
+
     def test_collect_cost_allows_negative_totals_and_zero(self):
         for amounts, expected in ((["-4.50"] + ["0"] * 6, "-4.50"), (["0"] * 7, "0")):
             with self.subTest(expected=expected):

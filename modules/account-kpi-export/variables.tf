@@ -74,9 +74,15 @@ variable "application" {
 variable "cost" {
   type = object({
     enabled = optional(bool, true)
+    scope   = optional(string, "account")
   })
   default     = {}
-  description = "Cost Explorer collection settings."
+  description = "Cost Explorer collection settings. Use organization scope only in the AWS Organizations management account to collect one total across all member accounts."
+
+  validation {
+    condition     = contains(["account", "organization"], var.cost.scope)
+    error_message = "Cost scope must be either account or organization."
+  }
 }
 
 variable "security" {

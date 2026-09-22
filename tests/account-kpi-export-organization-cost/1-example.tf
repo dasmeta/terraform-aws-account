@@ -23,19 +23,15 @@ module "this" {
       secret_arn = "arn:aws:secretsmanager:eu-central-1:111122223333:secret:account-kpi-example"
     }
 
-    application = {
-      enabled        = true
-      source_type    = "prometheus"
-      grafana_url    = "https://grafana.example.com"
-      datasource_uid = "example-prometheus"
-      query_profile  = "nginx_ingress"
-      metric_filter  = "namespace=\"production\", ingress=~\"api|web\""
-    }
-
-    cost = { enabled = false }
-    security = {
+    application = { enabled = false }
+    cost = {
       enabled = true
-      region  = "eu-central-1"
+      scope   = "organization"
+    }
+    security = { enabled = false }
+
+    lambda = {
+      name = "organization-cost-kpi-export"
     }
   }
 

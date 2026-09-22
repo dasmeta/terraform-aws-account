@@ -120,7 +120,7 @@ def check_shared_contract(plan):
                 "latency_query": LATENCY_QUERY,
                 "token_key": "example_grafana_token",
             },
-            "cost": {"enabled": True},
+            "cost": {"enabled": True, "scope": "account"},
             "security": {"enabled": False, "region": "eu-west-1"},
             "metrics": {
                 "security": 104,

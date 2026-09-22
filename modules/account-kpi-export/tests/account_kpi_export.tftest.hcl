@@ -282,6 +282,54 @@ run "aws_only_contract" {
   }
 }
 
+run "organization_cost_contract" {
+  command = plan
+
+  variables {
+    cost = {
+      enabled = true
+      scope   = "organization"
+    }
+    security = {
+      enabled = false
+    }
+  }
+
+  assert {
+    condition = jsondecode(local.config_json).cost == {
+      enabled = true
+      scope   = "organization"
+    }
+    error_message = "Organization cost scope must be serialized exactly for the handler."
+  }
+
+  assert {
+    condition = (
+      length(local.scheduler_schedules) == 1 &&
+      contains(keys(local.scheduler_schedules), local.wednesday_schedule_name) &&
+      contains(keys(local.lambda_policy_statements), "cost") &&
+      !contains(keys(local.lambda_policy_statements), "security")
+    )
+    error_message = "Organization cost-only collection must create only the AWS schedule and Cost Explorer permission."
+  }
+}
+
+run "cost_rejects_unknown_scope" {
+  command = plan
+
+  variables {
+    cost = {
+      enabled = true
+      scope   = "unknown"
+    }
+    security = {
+      enabled = false
+    }
+  }
+
+  expect_failures = [var.cost]
+}
+
 run "application_only_contract" {
   command = plan
 

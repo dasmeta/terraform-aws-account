@@ -100,6 +100,29 @@ run "root_accepts_canonical_nginx_metric_filter" {
   }
 }
 
+run "root_rejects_unknown_cost_scope" {
+  command = plan
+
+  variables {
+    account_kpi_export = {
+      enabled = true
+      cloudbrowser = {
+        client_id  = 42
+        secret_arn = "arn:aws:secretsmanager:eu-central-1:111122223333:secret:account-kpi-example"
+      }
+      cost = {
+        enabled = true
+        scope   = "unknown"
+      }
+      security = {
+        enabled = false
+      }
+    }
+  }
+
+  expect_failures = [var.account_kpi_export]
+}
+
 run "root_rejects_metric_filter_without_query_profile" {
   command = plan
 

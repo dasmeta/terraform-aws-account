@@ -15,6 +15,7 @@ locals {
     }
     cost = {
       enabled = var.cost.enabled
+      scope   = var.cost.scope
     }
     security = {
       enabled = var.security.enabled

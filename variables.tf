@@ -302,6 +302,7 @@ variable "account_kpi_export" {
     }), {})
     cost = optional(object({
       enabled = optional(bool, true)
+      scope   = optional(string, "account")
     }), {})
     security = optional(object({
       enabled = optional(bool, true)
@@ -339,6 +340,14 @@ variable "account_kpi_export" {
       var.account_kpi_export.cost.enabled || var.account_kpi_export.security.enabled || var.account_kpi_export.application.enabled
     )
     error_message = "The enabled weekly KPI exporter requires at least one enabled cost, security, or application source."
+  }
+
+  validation {
+    condition = !var.account_kpi_export.enabled ? true : contains(
+      ["account", "organization"],
+      var.account_kpi_export.cost.scope
+    )
+    error_message = "The enabled exporter cost scope must be either account or organization."
   }
 
   validation {

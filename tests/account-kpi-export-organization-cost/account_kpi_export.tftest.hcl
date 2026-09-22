@@ -34,11 +34,11 @@ mock_provider "aws" {
   override_during = plan
 }
 
-run "production_profile_example" {
+run "organization_cost_example" {
   command = plan
 
   assert {
     condition     = output.account_kpi_export != null
-    error_message = "The production example must expose the application and security KPI exporter outputs."
+    error_message = "The management-account example must expose the organization cost exporter outputs."
   }
 }
