@@ -31,7 +31,11 @@ module "this" {
       grafana_token_key      = "example_grafana_token"
     }
     application = {
-      enabled = false
+      enabled        = true
+      grafana_url    = "https://grafana.example.com"
+      datasource_uid = "example-prometheus"
+      query_profile  = "nginx_ingress"
+      metric_filter  = "namespace=\"production\", ingress=~\"api|web\""
     }
     cost = {
       enabled = true
