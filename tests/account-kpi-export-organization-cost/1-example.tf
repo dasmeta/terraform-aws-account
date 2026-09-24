@@ -1,3 +1,7 @@
+# Deploy this configuration exactly once, from the AWS Organizations management
+# account. The Terraform caller needs organizations:DescribeOrganization.
+# This management-account CloudBrowser row is the client-wide cost total; do not
+# add account-scoped cost rows to it in reporting.
 module "this" {
   source = "../../"
 

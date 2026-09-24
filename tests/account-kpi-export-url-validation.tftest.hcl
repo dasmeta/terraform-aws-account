@@ -1,4 +1,17 @@
 mock_provider "aws" {
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "444455556666"
+      arn        = "arn:aws:iam::444455556666:root"
+    }
+  }
+
+  mock_data "aws_organizations_organization" {
+    defaults = {
+      master_account_id = "111122223333"
+    }
+  }
+
   mock_data "aws_iam_policy_document" {
     defaults = {
       json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
@@ -121,6 +134,32 @@ run "root_rejects_unknown_cost_scope" {
   }
 
   expect_failures = [var.account_kpi_export]
+}
+
+run "root_rejects_organization_cost_from_member_account" {
+  command = plan
+
+  variables {
+    account_kpi_export = {
+      enabled = true
+      cloudbrowser = {
+        client_id  = 42
+        secret_arn = "arn:aws:secretsmanager:eu-central-1:444455556666:secret:account-kpi-example"
+      }
+      application = {
+        enabled = false
+      }
+      cost = {
+        enabled = true
+        scope   = "organization"
+      }
+      security = {
+        enabled = false
+      }
+    }
+  }
+
+  expect_failures = [data.aws_region.current]
 }
 
 run "root_rejects_metric_filter_without_query_profile" {

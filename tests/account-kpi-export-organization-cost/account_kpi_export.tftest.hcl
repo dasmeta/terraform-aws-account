@@ -8,6 +8,12 @@ mock_provider "aws" {
     }
   }
 
+  mock_data "aws_organizations_organization" {
+    defaults = {
+      master_account_id = "111122223333"
+    }
+  }
+
   mock_data "aws_partition" {
     defaults = {
       partition  = "aws"

@@ -23,6 +23,9 @@ module "this" {
       secret_arn = "arn:aws:secretsmanager:eu-central-1:111122223333:secret:account-kpi-example"
     }
 
+    # The generated profile uses the PromQL @ modifier. Use Prometheus 2.33+,
+    # Prometheus 2.25-2.32 with promql-at-modifier enabled, or a compatible
+    # backend such as VictoriaMetrics.
     application = {
       enabled        = true
       source_type    = "prometheus"
@@ -32,6 +35,7 @@ module "this" {
       metric_filter  = "namespace=\"production\", ingress=~\"api|web\""
     }
 
+    # Organization cost is collected once by the management-account exporter.
     cost = { enabled = false }
     security = {
       enabled = true
