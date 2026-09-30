@@ -29,7 +29,7 @@ variable "logs_retention_in_days" {
 variable "dlq_alarm_actions" {
   type        = list(string)
   default     = []
-  description = "Notification action ARNs for the failed-event queue depth alarm"
+  description = "Notification action ARNs for account event queue depth and oldest-message-age alarms"
 }
 
 variable "delivery" {

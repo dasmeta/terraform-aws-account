@@ -178,5 +178,20 @@ locals {
       }
       alarm_actions = var.lambda.alarm_action_arns
     }
+    failure_queue_age = {
+      alarm_name          = "${var.lambda.name}-failure-queue-oldest-message-age"
+      metric_name         = "ApproximateAgeOfOldestMessage"
+      namespace           = "AWS/SQS"
+      statistic           = "Maximum"
+      period              = "300"
+      evaluation_periods  = 1
+      comparison_operator = "GreaterThanThreshold"
+      threshold           = 300
+      treat_missing_data  = "notBreaching"
+      dimensions = {
+        QueueName = module.failure_queue.queue_name
+      }
+      alarm_actions = var.lambda.alarm_action_arns
+    }
   }
 }
