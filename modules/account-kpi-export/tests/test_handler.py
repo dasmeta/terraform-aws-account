@@ -29,7 +29,7 @@ class AwsClientError(RuntimeError):
         super().__init__(message)
 
 
-def config(application=False, cost=True, security=True):
+def config(application=False, cost=True, security=True, cost_scope="account"):
     return {
         "timezone": "Asia/Yerevan",
         "cloudbrowser": {
@@ -47,7 +47,7 @@ def config(application=False, cost=True, security=True):
             "latency_query": "avg_over_time(latency[$__account_kpi_window] @ $__account_kpi_end_seconds)",
             "token_key": "grafana",
         },
-        "cost": {"enabled": cost},
+        "cost": {"enabled": cost, "scope": cost_scope},
         "security": {"enabled": security, "region": "eu-central-1"},
         "metrics": {"cost": 12, "security": 4, "uptime": 24, "latency": 26},
     }
@@ -587,6 +587,27 @@ class HandlerTests(unittest.TestCase):
             "Filter": {"Dimensions": {"Key": "LINKED_ACCOUNT", "Values": ["111122223333"]}},
         }])
         self.assertEqual(security.standard_calls, [])
+        self.assertEqual([write[:3] for write in cb.writes], [(12, 101, 12.3457)])
+        self.assertEqual(result["metrics"], [{"name": "cost", "status": "created"}, {"name": "security", "status": "skipped"}])
+
+    def test_organization_cost_scope_omits_account_filter_and_writes_one_total(self):
+        secret = FakeSecrets(json.dumps({"cloudbrowser": "cloudbrowser-token"}))
+        cb = FakeCloudBrowser()
+        cost = FakeCostExplorer()
+
+        result = self.run_job(
+            {"job": "aws"},
+            aws_only_config(security=False) | {"cost": {"enabled": True, "scope": "organization"}},
+            {"secretsmanager": secret, "cloudbrowser": cb, "cost_explorer": cost},
+            output=lambda _: None,
+        )
+
+        self.assertEqual(cb.resolutions, ["111122223333"])
+        self.assertEqual(cost.calls, [{
+            "TimePeriod": {"Start": "2026-09-07", "End": "2026-09-14"},
+            "Granularity": "DAILY",
+            "Metrics": ["UnblendedCost"],
+        }])
         self.assertEqual([write[:3] for write in cb.writes], [(12, 101, 12.3457)])
         self.assertEqual(result["metrics"], [{"name": "cost", "status": "created"}, {"name": "security", "status": "skipped"}])
 

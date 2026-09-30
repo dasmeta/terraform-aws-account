@@ -35,7 +35,7 @@ _APPLICATION_CLOUDWATCH_ALB_KEYS = _APPLICATION_COMMON_KEYS | {
 _APPLICATION_KEYS = _APPLICATION_PROMETHEUS_KEYS | _APPLICATION_CLOUDWATCH_ALB_KEYS
 _CONFIG_GROUPS = {
     "cloudbrowser": {"base_url", "client_id", "aws_provider_id", "token_key"},
-    "cost": {"enabled"},
+    "cost": {"enabled", "scope"},
     "security": {"enabled", "region"},
     "metrics": {"cost", "security", "uptime", "latency"},
 }
@@ -160,7 +160,10 @@ def _configuration(environment):
                 _invalid_config()
         else:
             _invalid_config()
-    if not isinstance(config["cost"]["enabled"], bool):
+    if (
+        not isinstance(config["cost"]["enabled"], bool)
+        or config["cost"]["scope"] not in {"account", "organization"}
+    ):
         _invalid_config()
     if not isinstance(config["security"]["enabled"], bool) or not _nonempty_string(config["security"]["region"]):
         _invalid_config()
@@ -450,7 +453,13 @@ def handle(event, context, environment=None, now=None, clients=None, factories=N
         if cost_entry["status"] == "pending":
             try:
                 cost_client = _client("cost_explorer", clients, client_factory)
-                value = collect_cost(cost_client, account, window.start_date, window.end_date)
+                value = collect_cost(
+                    cost_client,
+                    account,
+                    window.start_date,
+                    window.end_date,
+                    scope=config["cost"]["scope"],
+                )
                 rounded_cost = _round_number(value, 4)
             except Exception as error:
                 _set_failed(cost_entry, "source", error)

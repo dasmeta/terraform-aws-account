@@ -50,7 +50,7 @@ def check_plan(plan):
         "latency_query": "avg_over_time(request_duration_seconds_sum[$__account_kpi_window] @ $__account_kpi_end_seconds)",
         "token_key": "grafana_api_token"
     }, "Application runtime configuration drifted")
-    require(config["cost"] == {"enabled": True} and config["security"] == {"enabled": True, "region": "eu-central-1"}, "AWS source runtime configuration drifted")
+    require(config["cost"] == {"enabled": True, "scope": "account"} and config["security"] == {"enabled": True, "region": "eu-central-1"}, "AWS source runtime configuration drifted")
     require(config["metrics"] == {"cost": 12, "security": 4, "uptime": 24, "latency": 26}, "Metric runtime configuration drifted")
 
     queue = single(resources, "aws_sqs_queue")["change"]["after"]

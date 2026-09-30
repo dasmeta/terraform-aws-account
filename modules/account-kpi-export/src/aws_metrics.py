@@ -1,10 +1,11 @@
-"""Account-scoped Cost Explorer and Security Hub measurements."""
+"""Cost Explorer and account-scoped Security Hub measurements."""
 
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 
 
 _COST_UNIT = "USD"
+_COST_SCOPES = {"account", "organization"}
 _SECURITY_STATUSES = {
     "FAILED": ("Failed", 3),
     "WARNING": ("Unknown", 2),
@@ -13,15 +14,20 @@ _SECURITY_STATUSES = {
 }
 
 
-def _cost_request(account_id, start_date, end_date):
-    return {
+def _cost_request(account_id, start_date, end_date, scope):
+    if scope not in _COST_SCOPES:
+        raise ValueError("Unsupported Cost Explorer scope: {0}".format(scope))
+
+    request = {
         "TimePeriod": {"Start": start_date.isoformat(), "End": end_date.isoformat()},
         "Granularity": "DAILY",
         "Metrics": ["UnblendedCost"],
-        "Filter": {
-            "Dimensions": {"Key": "LINKED_ACCOUNT", "Values": [account_id]}
-        },
     }
+    if scope == "account":
+        request["Filter"] = {
+            "Dimensions": {"Key": "LINKED_ACCOUNT", "Values": [account_id]}
+        }
+    return request
 
 
 def _cost_bucket_period(result):
@@ -49,10 +55,10 @@ def _expected_cost_days(start_date, end_date):
     return expected
 
 
-def collect_cost(cost_explorer, account_id, start_date, end_date):
-    """Return the prior-week unblended cost for exactly one linked account."""
+def collect_cost(cost_explorer, account_id, start_date, end_date, scope="account"):
+    """Return prior-week account or organization-wide unblended cost."""
 
-    request = _cost_request(account_id, start_date, end_date)
+    request = _cost_request(account_id, start_date, end_date, scope)
     total = Decimal("0")
     unit = None
     saw_amount = False
