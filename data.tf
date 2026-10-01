@@ -27,3 +27,12 @@ data "aws_region" "current" {
     }
   }
 }
+
+data "aws_db_instances" "rds_free_storage" {
+  count = var.rds_free_storage_alarms.enabled ? 1 : 0
+}
+
+data "aws_db_instances" "rds_free_storage_virginia" {
+  count    = var.rds_free_storage_alarms.enabled ? 1 : 0
+  provider = aws.virginia
+}

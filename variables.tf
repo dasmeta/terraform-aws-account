@@ -173,6 +173,21 @@ variable "alarm_actions" {
   description = "Whether to enable/create regional(TODO: add also us-east-1 region alarm also for health-check alarms) SNS topic/subscribers"
 }
 
+variable "rds_free_storage_alarms" {
+  type = object({
+    enabled             = optional(bool, true)
+    threshold           = optional(number, 10737418240) # 10 GiB
+    period              = optional(number, 300)
+    evaluation_periods  = optional(number, 1)
+    datapoints_to_alarm = optional(number, 1)
+    statistic           = optional(string, "Minimum")
+    comparison_operator = optional(string, "LessThanThreshold")
+    treat_missing_data  = optional(string, "notBreaching")
+  })
+  default     = {}
+  description = "Default CloudWatch FreeStorageSpace alarms for every RDS DB instance in both configured regions."
+}
+
 variable "alarm_actions_virginia" { # TODO: it seems we can combine alarm_actions_virginia into alarm_actions so that we will have one source of config, as we usually have same channels for alarm in both primary and virginia regions
   type = object({
     enabled                  = optional(bool, false)
