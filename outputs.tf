@@ -38,3 +38,11 @@ output "account_events_export" {
     }
   } : null
 }
+
+output "rds_free_storage_alarm_arns" {
+  description = "CloudWatch FreeStorageSpace alarm ARNs for discovered RDS instances in each configured region."
+  value = {
+    primary  = { for identifier, alarm in aws_cloudwatch_metric_alarm.rds_free_storage : identifier => alarm.arn }
+    virginia = { for identifier, alarm in aws_cloudwatch_metric_alarm.rds_free_storage_virginia : identifier => alarm.arn }
+  }
+}
