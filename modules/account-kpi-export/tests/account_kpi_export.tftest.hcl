@@ -245,6 +245,7 @@ run "aws_only_contract" {
     condition = (
       local.alarm_configurations.lambda_errors.metric_name == "Errors" &&
       local.alarm_configurations.failure_queue.metric_name == "ApproximateNumberOfMessagesVisible" &&
+      local.alarm_configurations.failure_queue_age.metric_name == "ApproximateAgeOfOldestMessage" &&
       length(local.alarm_configurations.lambda_errors.alarm_actions) == 0 &&
       length(local.alarm_configurations.failure_queue.alarm_actions) == 0
     )
@@ -256,9 +257,9 @@ run "aws_only_contract" {
       output.lambda_function_arn == module.lambda_function.lambda_function_arn &&
       output.failure_queue_arn == module.failure_queue.queue_arn &&
       length(output.schedule_arns) == 1 &&
-      length(output.alarm_arns) == 2
+      length(output.alarm_arns) == 3
     )
-    error_message = "Operational outputs must expose one Lambda, one queue, enabled schedules, and both alarms."
+    error_message = "Operational outputs must expose one Lambda, one queue, enabled schedules, and all three alarms."
   }
 
   assert {
