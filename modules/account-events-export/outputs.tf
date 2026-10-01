@@ -25,3 +25,12 @@ output "failed_event_queue_data" {
     url  = module.event_queue.dead_letter_queue_url
   }
 }
+
+output "alarm_arns" {
+  description = "ARNs of the event queue depth and oldest-message-age alarms"
+  value = {
+    failed_event_queue                    = aws_cloudwatch_metric_alarm.failed_event_queue.arn
+    event_queue_oldest_message_age        = aws_cloudwatch_metric_alarm.event_queue_oldest_message_age.arn
+    failed_event_queue_oldest_message_age = aws_cloudwatch_metric_alarm.failed_event_queue_oldest_message_age.arn
+  }
+}

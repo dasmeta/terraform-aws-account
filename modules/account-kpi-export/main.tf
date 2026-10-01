@@ -107,3 +107,23 @@ module "failure_queue_alarm" {
 
   tags = var.tags
 }
+
+module "failure_queue_age_alarm" {
+  source  = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  version = "5.7.2"
+
+  alarm_name          = local.alarm_configurations.failure_queue_age.alarm_name
+  alarm_description   = "Weekly KPI collector failure queue contains a message older than five minutes"
+  comparison_operator = local.alarm_configurations.failure_queue_age.comparison_operator
+  evaluation_periods  = local.alarm_configurations.failure_queue_age.evaluation_periods
+  threshold           = local.alarm_configurations.failure_queue_age.threshold
+  metric_name         = local.alarm_configurations.failure_queue_age.metric_name
+  namespace           = local.alarm_configurations.failure_queue_age.namespace
+  period              = local.alarm_configurations.failure_queue_age.period
+  statistic           = local.alarm_configurations.failure_queue_age.statistic
+  dimensions          = local.alarm_configurations.failure_queue_age.dimensions
+  treat_missing_data  = local.alarm_configurations.failure_queue_age.treat_missing_data
+  alarm_actions       = local.alarm_configurations.failure_queue_age.alarm_actions
+
+  tags = var.tags
+}

@@ -24,9 +24,10 @@ output "failure_queue_url" {
 }
 
 output "alarm_arns" {
-  description = "ARNs of the Lambda error and visible failure-queue alarms."
+  description = "ARNs of the Lambda error, visible failure-queue, and oldest-message-age alarms."
   value = {
-    lambda_errors = module.lambda_errors_alarm.cloudwatch_metric_alarm_arn
-    failure_queue = module.failure_queue_alarm.cloudwatch_metric_alarm_arn
+    lambda_errors     = module.lambda_errors_alarm.cloudwatch_metric_alarm_arn
+    failure_queue     = module.failure_queue_alarm.cloudwatch_metric_alarm_arn
+    failure_queue_age = module.failure_queue_age_alarm.cloudwatch_metric_alarm_arn
   }
 }

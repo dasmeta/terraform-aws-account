@@ -78,6 +78,50 @@ resource "aws_cloudwatch_metric_alarm" "failed_event_queue" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "event_queue_oldest_message_age" {
+  alarm_name        = "${var.name}-queue-oldest-message-age"
+  alarm_description = "Buffered account events have remained in the delivery queue for more than five minutes"
+
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = 300
+
+  namespace   = "AWS/SQS"
+  metric_name = "ApproximateAgeOfOldestMessage"
+  period      = 300
+  statistic   = "Maximum"
+
+  alarm_actions      = var.dlq_alarm_actions
+  treat_missing_data = "notBreaching"
+
+  dimensions = {
+    QueueName = module.event_queue.queue_name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "failed_event_queue_oldest_message_age" {
+  alarm_name        = "${var.name}-dlq-oldest-message-age"
+  alarm_description = "Account event delivery failures have remained in the dead-letter queue for more than five minutes"
+
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = 300
+
+  namespace   = "AWS/SQS"
+  metric_name = "ApproximateAgeOfOldestMessage"
+  period      = 300
+  statistic   = "Maximum"
+
+  alarm_actions      = var.dlq_alarm_actions
+  treat_missing_data = "notBreaching"
+
+  dimensions = {
+    QueueName = module.event_queue.dead_letter_queue_name
+  }
+}
+
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "7.21.1"

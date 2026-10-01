@@ -29,10 +29,12 @@ output "account_events_export" {
     primary = {
       event_queue        = module.account_events_export[0].event_queue_data
       failed_event_queue = module.account_events_export[0].failed_event_queue_data
+      alarm_arns         = module.account_events_export[0].alarm_arns
     }
     virginia = {
       event_queue        = module.account_events_export_virginia[0].event_queue_data
       failed_event_queue = module.account_events_export_virginia[0].failed_event_queue_data
+      alarm_arns         = module.account_events_export_virginia[0].alarm_arns
     }
   } : null
 }

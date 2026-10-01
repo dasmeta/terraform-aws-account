@@ -89,6 +89,11 @@ run "custom_alarm_actions_only" {
     error_message = "The enabled exporter output must expose only operational identifiers."
   }
 
+  assert {
+    condition     = contains(keys(output.account_kpi_export.alarm_arns), "failure_queue_age")
+    error_message = "The KPI failure queue oldest-message-age alarm must be exposed."
+  }
+
 }
 
 run "account_alarm_topic_is_merged" {
