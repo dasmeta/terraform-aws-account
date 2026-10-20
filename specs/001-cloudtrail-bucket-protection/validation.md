@@ -9,3 +9,5 @@
 - Live existing-state zero-replacement planning, real delivery/IAM verification, supported dependency releases and exact production approval remain deployment gates. No cloud apply or release performed.
 
 A final native run with the temporary consumer provider file removed also passed: 2 passed,0 failed. The resource-state checker passed against that fresh verbose state. Native test mocks supply required aliases themselves; the caller context is needed only for standalone terraform validate.
+
+Published dependency PRs: https://github.com/dasmeta/terraform-aws-modules/pull/371 and https://github.com/dasmeta/terraform-aws-account/pull/67. Sela source and regenerated account Terraform are published in MR !183 at 21de61e381ff5c8cd71640ac46c43387cc7164af. The consumer pins the tested immutable code commits; this follow-up changes documentation only. All source-implementation tasks are complete; merge/release and production deployment gates remain outstanding.

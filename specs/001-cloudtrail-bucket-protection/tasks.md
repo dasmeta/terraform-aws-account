@@ -12,7 +12,7 @@
 
 ## Delivery
 - [x] T007 Obtain read-only review, publish a draft dependency PR and record tests/revisions in validation.md.
-- [ ] T008 Update Sela YAML and regenerate _terraform from the supported wrapper revision; verify all three requested settings and existing retention/dev changes remain intact.
+- [x] T008 Update Sela YAML and regenerate _terraform from the supported wrapper revision; verify all three requested settings and existing retention/dev changes remain intact.
 
 ## Dependencies and strategy
 T001→T002→T003→T004→T005→T006→T007→T008. Child support must be tested/published before its immutable pin is usable. Root account init may need many unrelated modules; keep validation bounded to the changed wrapper contract and real child behavior if unrelated baseline issues block full validation, reporting the exact limit. No cloud apply, shared merge or release.
