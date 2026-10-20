@@ -36,7 +36,7 @@ def check(path):
     assert versioning["versioning_configuration"][0]["status"] == "Enabled"
     retention = lock["rule"][0]["default_retention"][0]
     assert lock["object_lock_enabled"] == "Enabled"
-    assert retention["mode"] == "GOVERNANCE" and retention["years"] == 5
+    assert retention["mode"] == "GOVERNANCE" and retention["days"] == 1827 and retention.get("years") is None
     assert versioning["bucket"] == bucket["id"] == lock["bucket"]
     statements = {s["Sid"]: s for s in policy["Statement"]}
     deny = statements["DenyGovernanceBypassExceptEmergencyRoles"]
@@ -51,7 +51,7 @@ def check(path):
     ]
     assert trail["enable_log_file_validation"] and trail["is_multi_region_trail"]
     assert trail["s3_bucket_name"] == "example-audit-cloud-trail-bucket"
-    print("PASS: account wrapper forwards versioning, five-year Governance, forced-deletion protection and the exact bypass exception to real child resource configuration.")
+    print("PASS: account wrapper forwards versioning, 1827-day Governance with years unset, forced-deletion protection and the exact bypass exception to real child resource configuration.")
 
 
 if __name__ == "__main__":

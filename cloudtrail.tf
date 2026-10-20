@@ -1,6 +1,6 @@
 module "cloudtrail" {
   # Immutable draft dependency for bucket protection; use a supported release before deployment.
-  source = "git::https://github.com/dasmeta/terraform-aws-modules.git//modules/cloudtrail?ref=f2e7b3c7c1592b8736bfef1324e1e33b5c4c69b8"
+  source = "git::https://github.com/dasmeta/terraform-aws-modules.git//modules/cloudtrail?ref=8f95be9054514e0dcfaccda8c9c88c7f881dca2b"
 
   count = var.cloudtrail.enabled ? 1 : 0
 

@@ -62,7 +62,8 @@ variable "cloudtrail" {
     bucket_protection = optional(object({                      # Protection controls for the module-owned CloudTrail bucket.
       force_destroy               = optional(bool, true)       # Preserve legacy behavior unless explicitly set false.
       versioning_enabled          = optional(bool, false)      # Enable bucket versioning without replacing the bucket.
-      governance_retention_years  = optional(number, 0)        # Default Governance retention in years; zero leaves Object Lock unmanaged.
+      governance_retention_days   = optional(number, 0)        # Explicit whole-day retention; 1827 covers five calendar years.
+      governance_retention_years  = optional(number, 0)        # Default Governance retention in years; zero leaves this unit unset.
       governance_bypass_role_arns = optional(list(string), []) # Exact emergency role ARNs exempted from the bypass deny; empty denies everyone.
     }), {})
     include_global_service_events    = optional(bool, true)   # Specifies whether the trail is publishing events from global services such as IAM to the log files
