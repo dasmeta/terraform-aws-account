@@ -54,11 +54,17 @@ variable "buckets" {
 
 variable "cloudtrail" {
   type = object({
-    enabled                          = optional(bool, false)
-    enable_cloudwatch_logs           = optional(bool, false)
-    name                             = optional(string, "audit") # Name of CloudTrail
-    bucket_name                      = optional(string, "")      # Whether to create new fresh bucket or use existing one, if set non empty it will use existing one with provided name
-    create_s3_bucket                 = optional(bool, true)
+    enabled                = optional(bool, false)
+    enable_cloudwatch_logs = optional(bool, false)
+    name                   = optional(string, "audit") # Name of CloudTrail
+    bucket_name            = optional(string, "")      # Whether to create new fresh bucket or use existing one, if set non empty it will use existing one with provided name
+    create_s3_bucket       = optional(bool, true)
+    bucket_protection = optional(object({                      # Protection controls for the module-owned CloudTrail bucket.
+      force_destroy               = optional(bool, true)       # Preserve legacy behavior unless explicitly set false.
+      versioning_enabled          = optional(bool, false)      # Enable bucket versioning without replacing the bucket.
+      governance_retention_years  = optional(number, 0)        # Default Governance retention in years; zero leaves Object Lock unmanaged.
+      governance_bypass_role_arns = optional(list(string), []) # Exact emergency role ARNs exempted from the bypass deny; empty denies everyone.
+    }), {})
     include_global_service_events    = optional(bool, true)   # Specifies whether the trail is publishing events from global services such as IAM to the log files
     enable_log_file_validation       = optional(bool, true)   # Specifies whether log file integrity validation is enabled. Creates signed digest for validated contents of logs
     is_organization_trail            = optional(bool, true)   # The trail is an AWS Organizations trail

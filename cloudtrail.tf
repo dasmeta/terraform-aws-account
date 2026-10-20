@@ -1,12 +1,13 @@
 module "cloudtrail" {
-  source  = "dasmeta/modules/aws//modules/cloudtrail/"
-  version = "2.18.3"
+  # Immutable draft dependency for bucket protection; use a supported release before deployment.
+  source = "git::https://github.com/dasmeta/terraform-aws-modules.git//modules/cloudtrail?ref=f2e7b3c7c1592b8736bfef1324e1e33b5c4c69b8"
 
   count = var.cloudtrail.enabled ? 1 : 0
 
   name                             = var.cloudtrail.name
   bucket_name                      = var.cloudtrail.bucket_name
   create_s3_bucket                 = var.cloudtrail.create_s3_bucket
+  bucket_protection                = var.cloudtrail.bucket_protection
   include_global_service_events    = var.cloudtrail.include_global_service_events
   enable_log_file_validation       = var.cloudtrail.enable_log_file_validation
   is_organization_trail            = var.cloudtrail.is_organization_trail
