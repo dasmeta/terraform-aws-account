@@ -64,6 +64,10 @@ resource "aws_iam_role" "security_hub_remediation_start" {
       Effect    = "Allow"
       Principal = { Service = "events.amazonaws.com" }
       Action    = "sts:AssumeRole"
+      Condition = {
+        ArnEquals    = { "aws:SourceArn" = aws_cloudwatch_event_rule.security_hub_remediation[each.key].arn }
+        StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id }
+      }
     }]
   })
 }
@@ -127,7 +131,6 @@ resource "aws_sqs_queue_policy" "security_hub_remediation_failed_delivery" {
             aws_cloudwatch_event_rule.security_hub_remediation_failed[each.key].arn
           ]
         }
-        StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id }
       }
     }]
   })
