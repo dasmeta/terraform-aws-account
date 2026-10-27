@@ -1,9 +1,23 @@
 # AWS Security Hub Module
 # This module sets up Security Hub with submodules (Config, Inspector, GuardDuty, Macie)
 # and integrates with alarm actions for findings notifications
+locals {
+  security_hub_reuses_account_topic = (
+    var.alarm_actions.security_hub_alarms.use_account_topic ||
+    var.alarm_actions.topic_name == var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name
+  )
+  security_hub_notification_topic_name = local.security_hub_reuses_account_topic ? (
+    var.alarm_actions.topic_name
+    ) : (
+    var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name != "" ?
+    var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name :
+    "${var.security_hub.name}-security-hub-findings"
+  )
+}
+
 module "monitoring_security_hub" {
   source  = "dasmeta/monitoring/aws//modules/security-hub"
-  version = "1.21.0"
+  version = "3.0.0"
 
   count = var.security_hub.enabled ? 1 : 0
 
@@ -36,13 +50,15 @@ module "monitoring_security_hub" {
       enabled = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
     },
     var.alarm_actions.security_hub_alarms.custom_alarm_actions,
-    var.alarm_actions.security_hub_alarms.use_account_topic || var.alarm_actions.topic_name == var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name ? {
+    local.security_hub_reuses_account_topic ? {
       create_topic                     = false
       topic_name                       = var.alarm_actions.topic_name
       enable_dead_letter_queue         = false
       topic_assign_security_hub_policy = false
     } : {}
   )
+
+  delivery_failure = var.security_hub.delivery_failure
 
   depends_on = [module.cloudwatch_alarm_actions]
 }

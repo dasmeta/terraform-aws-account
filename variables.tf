@@ -494,6 +494,11 @@ variable "security_hub" {
     ])
     action_target_name  = optional(string, "SendNotification") # Name of the Security Hub action target for manual triggers
     securityhub_members = optional(map(string), {})            # Map of email -> account_id for Security Hub member accounts
+    delivery_failure = optional(object({                       # Required by monitoring v3 when Security Hub alert actions are enabled
+      owner                = string                            # Operator responsible for failed finding delivery
+      escalation_topic_arn = string                            # Separate SNS topic for DLQ and delivery metric alarms
+      runbook_url          = string                            # HTTPS procedure for investigation, recovery, and replay
+    }), null)
     # AWS Config submodule configuration
     config = optional(object({
       enabled                    = optional(bool, true)                 # Enable/disable AWS Config. REQUIRED for Security Hub standards to work properly
@@ -704,7 +709,67 @@ variable "security_hub" {
         })
       })), {})
     }), {})
+    remediation_workflows = optional(map(object({   # Named, opt-in corrective workflows for approved Security Hub controls and resources
+      enabled              = optional(bool, false)  # Start the workflow only when explicitly enabled
+      state_machine_arn    = string                 # ARN of an approved STANDARD Step Functions state machine in this account and Region
+      security_control_ids = set(string)            # Exact Security Hub control IDs such as S3.8
+      resource_ids         = set(string)            # Exact ASFF Resources.Id values that may trigger this workflow
+      owner                = string                 # Team or role accountable for this corrective workflow
+      runbook_url          = string                 # HTTPS procedure describing approval, safety checks, and rollback
+      escalation_topic_arn = optional(string, null) # Separately owned same-account/Region SNS destination for delivery and execution failures
+      safety = optional(object({                    # Reviewed workflow contract; live evidence remains required
+        idempotency_mode     = string               # IDEMPOTENT or DEDUPLICATED for repeated finding events
+        revalidates_scope    = bool                 # State machine checks account, control, status, and exact resource again
+        verifies_result      = bool                 # State machine checks AWS state after mutation before success
+        failure_behavior     = string               # ESCALATE_AND_MANUAL_ROLLBACK
+        rollback_runbook_url = string               # HTTPS procedure for partial-action recovery
+      }), null)
+    })), {})
   })
   default     = {}
-  description = "AWS Security Hub configuration with submodules (Config, Inspector, GuardDuty, Macie) and alarm actions for findings notifications"
+  description = "AWS Security Hub configuration with Config, Inspector, GuardDuty, Macie, alerting, and optional bounded corrective workflow routes"
+
+  validation {
+    condition = var.security_hub.delivery_failure == null ? true : (
+      try(trimspace(var.security_hub.delivery_failure.owner), "") != "" &&
+      can(regex("^arn:aws(-us-gov|-cn)?:sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_-]+$", var.security_hub.delivery_failure.escalation_topic_arn)) &&
+      can(regex("^https://[^ ]+$", var.security_hub.delivery_failure.runbook_url))
+    )
+    error_message = "security_hub.delivery_failure requires an owner, exact SNS escalation topic ARN, and HTTPS recovery runbook."
+  }
+
+  validation {
+    condition = alltrue([
+      for name, workflow in var.security_hub.remediation_workflows : !workflow.enabled || (
+        can(regex("^[A-Za-z0-9_-]{1,24}$", name)) &&
+        length(var.security_hub.name) + length(name) <= 44 &&
+        can(regex("^arn:aws(-us-gov|-cn)?:states:[a-z0-9-]+:[0-9]{12}:stateMachine:[A-Za-z0-9_-]+$", workflow.state_machine_arn)) &&
+        length(workflow.security_control_ids) > 0 &&
+        alltrue([for control in workflow.security_control_ids : can(regex("^[A-Za-z0-9]+[.][0-9]+$", control))]) &&
+        length(workflow.resource_ids) > 0 &&
+        alltrue([for resource in workflow.resource_ids : can(regex("^arn:", resource)) && !can(regex("[*?]", resource))]) &&
+        trimspace(workflow.owner) != "" &&
+        can(regex("^https://[^ ]+$", workflow.runbook_url)) &&
+        can(regex("^arn:aws(-us-gov|-cn)?:sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_-]+$", workflow.escalation_topic_arn)) &&
+        contains(["IDEMPOTENT", "DEDUPLICATED"], try(workflow.safety.idempotency_mode, "")) &&
+        coalesce(try(workflow.safety.revalidates_scope, false), false) &&
+        coalesce(try(workflow.safety.verifies_result, false), false) &&
+        try(workflow.safety.failure_behavior, "") == "ESCALATE_AND_MANUAL_ROLLBACK" &&
+        can(regex("^https://[^ ]+$", workflow.safety.rollback_runbook_url))
+      )
+    ])
+    error_message = "Enabled remediation workflows require exact control/resource scope, owner, a separate escalation topic, runbooks, and a reviewed idempotency, revalidation, verification, and failure contract. Wildcards are not allowed."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for first_name, first in var.security_hub.remediation_workflows : [
+        for second_name, second in var.security_hub.remediation_workflows :
+        first_name == second_name || !first.enabled || !second.enabled ||
+        length(setintersection(first.security_control_ids, second.security_control_ids)) == 0 ||
+        length(setintersection(first.resource_ids, second.resource_ids)) == 0
+      ]
+    ]))
+    error_message = "Enabled corrective workflows cannot overlap on both a Security Hub control ID and an exact resource ID."
+  }
 }
