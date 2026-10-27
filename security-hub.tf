@@ -17,7 +17,7 @@ locals {
 
 module "monitoring_security_hub" {
   source  = "dasmeta/monitoring/aws//modules/security-hub"
-  version = "1.21.0"
+  version = "3.0.0"
 
   count = var.security_hub.enabled ? 1 : 0
 
@@ -57,6 +57,8 @@ module "monitoring_security_hub" {
       topic_assign_security_hub_policy = false
     } : {}
   )
+
+  delivery_failure = var.security_hub.delivery_failure
 
   depends_on = [module.cloudwatch_alarm_actions]
 }

@@ -70,10 +70,15 @@ output "security_hub_remediation_routes" {
 output "security_hub_alerting_route" {
   description = "Configured automatic finding route and topic name; live delivery and acknowledgement require separate evidence"
   value = var.security_hub.enabled ? {
-    enabled                    = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
-    notification_topic_name    = local.security_hub_notification_topic_name
-    reuses_account_topic       = local.security_hub_reuses_account_topic
-    automatic_eventbridge_rule = module.monitoring_security_hub[0].eventbridge_rule_arn
-    manual_action_target_arn   = module.monitoring_security_hub[0].security_hub_action_target_arn
+    enabled                     = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
+    notification_topic_name     = local.security_hub_notification_topic_name
+    reuses_account_topic        = local.security_hub_reuses_account_topic
+    automatic_eventbridge_rule  = module.monitoring_security_hub[0].eventbridge_rule_arn
+    manual_action_target_arn    = module.monitoring_security_hub[0].security_hub_action_target_arn
+    manual_eventbridge_rule_arn = module.monitoring_security_hub[0].manual_eventbridge_rule_arn
+    failed_delivery_queue_arn   = module.monitoring_security_hub[0].eventbridge_failed_delivery_queue_arn
+    failed_delivery_queue_url   = module.monitoring_security_hub[0].eventbridge_failed_delivery_queue_url
+    failed_delivery_alarm_arns  = module.monitoring_security_hub[0].eventbridge_failed_delivery_alarm_arns
+    failure_response            = module.monitoring_security_hub[0].delivery_failure_response
   } : null
 }

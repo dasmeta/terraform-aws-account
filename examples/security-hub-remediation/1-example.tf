@@ -12,6 +12,11 @@ module "account" {
 
   security_hub = {
     enabled = true
+    delivery_failure = {
+      owner                = "example-security-operations"
+      escalation_topic_arn = var.security_escalation_topic_arn
+      runbook_url          = "https://example.com/runbooks/security-hub-delivery"
+    }
     remediation_workflows = {
       example_s3_public_access = {
         enabled              = var.enable_remediation

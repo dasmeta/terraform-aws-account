@@ -138,6 +138,5 @@ variable "enable_remediation" {
 
 variable "security_escalation_topic_arn" {
   type        = string
-  default     = null
   description = "Existing operator-owned SNS topic in this account and Region, separate from the account notification topic"
 }

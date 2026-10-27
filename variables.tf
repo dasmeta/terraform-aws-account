@@ -494,6 +494,11 @@ variable "security_hub" {
     ])
     action_target_name  = optional(string, "SendNotification") # Name of the Security Hub action target for manual triggers
     securityhub_members = optional(map(string), {})            # Map of email -> account_id for Security Hub member accounts
+    delivery_failure = optional(object({                       # Required by monitoring v3 when Security Hub alert actions are enabled
+      owner                = string                            # Operator responsible for failed finding delivery
+      escalation_topic_arn = string                            # Separate SNS topic for DLQ and delivery metric alarms
+      runbook_url          = string                            # HTTPS procedure for investigation, recovery, and replay
+    }), null)
     # AWS Config submodule configuration
     config = optional(object({
       enabled                    = optional(bool, true)                 # Enable/disable AWS Config. REQUIRED for Security Hub standards to work properly
@@ -723,6 +728,15 @@ variable "security_hub" {
   })
   default     = {}
   description = "AWS Security Hub configuration with Config, Inspector, GuardDuty, Macie, alerting, and optional bounded corrective workflow routes"
+
+  validation {
+    condition = var.security_hub.delivery_failure == null ? true : (
+      try(trimspace(var.security_hub.delivery_failure.owner), "") != "" &&
+      can(regex("^arn:aws(-us-gov|-cn)?:sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_-]+$", var.security_hub.delivery_failure.escalation_topic_arn)) &&
+      can(regex("^https://[^ ]+$", var.security_hub.delivery_failure.runbook_url))
+    )
+    error_message = "security_hub.delivery_failure requires an owner, exact SNS escalation topic ARN, and HTTPS recovery runbook."
+  }
 
   validation {
     condition = alltrue([
