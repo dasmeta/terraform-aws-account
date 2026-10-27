@@ -7,6 +7,14 @@ locals {
     for pair in setproduct(keys(local.enabled_security_hub_remediation_workflows), ["ExecutionsFailed", "ExecutionsTimedOut", "ExecutionsAborted"]) :
     "${pair[0]}-${pair[1]}" => { workflow = pair[0], metric = pair[1] }
   }
+  security_hub_remediation_delivery_metrics = {
+    for pair in setproduct(keys(local.enabled_security_hub_remediation_workflows), ["finding", "failure"], ["InvocationsSentToDlq", "InvocationsFailedToBeSentToDlq"]) :
+    "${pair[0]}-${pair[1]}-${pair[2]}" => {
+      workflow  = pair[0]
+      rule_name = pair[1] == "finding" ? aws_cloudwatch_event_rule.security_hub_remediation[pair[0]].name : aws_cloudwatch_event_rule.security_hub_remediation_failed[pair[0]].name
+      metric    = pair[2]
+    }
+  }
 }
 
 # Security Hub sends each new and updated finding to EventBridge. The receiving
@@ -47,9 +55,13 @@ resource "aws_cloudwatch_event_rule" "security_hub_remediation" {
           length(var.alarm_actions.teams_webhooks)
         ) > 0 &&
         split(":", each.value.state_machine_arn)[3] == data.aws_region.current.name &&
-        split(":", each.value.state_machine_arn)[4] == data.aws_caller_identity.current.account_id
+        split(":", each.value.state_machine_arn)[4] == data.aws_caller_identity.current.account_id &&
+        try(split(":", each.value.escalation_topic_arn)[3], "") == data.aws_region.current.name &&
+        try(split(":", each.value.escalation_topic_arn)[4], "") == data.aws_caller_identity.current.account_id &&
+        try(split(":", each.value.escalation_topic_arn)[5], "") != var.alarm_actions.topic_name &&
+        try(each.value.escalation_topic_arn, "") != module.cloudwatch_alarm_actions[0].topic_arn
       )
-      error_message = "Corrective workflows require an account notification channel and a state machine in the active AWS account and Region."
+      error_message = "Corrective workflows require an account notification channel, same-account/Region state machine, and a separate same-account/Region failure escalation topic."
     }
   }
 }
@@ -193,5 +205,39 @@ resource "aws_cloudwatch_metric_alarm" "security_hub_remediation_execution_faile
   statistic           = "Sum"
   treat_missing_data  = "notBreaching"
   dimensions          = { StateMachineArn = local.enabled_security_hub_remediation_workflows[each.value.workflow].state_machine_arn }
-  alarm_actions       = [module.cloudwatch_alarm_actions[0].topic_arn]
+  alarm_actions       = [local.enabled_security_hub_remediation_workflows[each.value.workflow].escalation_topic_arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "security_hub_remediation_queue_nonempty" {
+  for_each = local.enabled_security_hub_remediation_workflows
+
+  alarm_name          = "${var.security_hub.name}-${each.key}-failed-delivery-queued"
+  alarm_description   = "${each.value.owner} investigates and replays corrective delivery failures; ${each.value.runbook_url}."
+  namespace           = "AWS/SQS"
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  dimensions          = { QueueName = aws_sqs_queue.security_hub_remediation_failed_delivery[each.key].name }
+  statistic           = "Maximum"
+  period              = 300
+  evaluation_periods  = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 1
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [each.value.escalation_topic_arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "security_hub_remediation_delivery_metric" {
+  for_each = local.security_hub_remediation_delivery_metrics
+
+  alarm_name          = "${var.security_hub.name}-${each.key}"
+  alarm_description   = "${local.enabled_security_hub_remediation_workflows[each.value.workflow].owner} investigates ${each.value.metric}; ${local.enabled_security_hub_remediation_workflows[each.value.workflow].runbook_url}."
+  namespace           = "AWS/Events"
+  metric_name         = each.value.metric
+  dimensions          = { RuleName = each.value.rule_name }
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 1
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [local.enabled_security_hub_remediation_workflows[each.value.workflow].escalation_topic_arn]
 }

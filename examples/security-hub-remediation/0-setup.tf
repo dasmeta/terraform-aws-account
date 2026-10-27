@@ -135,3 +135,9 @@ variable "enable_remediation" {
   default     = false
   description = "Enable the corrective trigger after reviewing workflow safety and its exact resource scope"
 }
+
+variable "security_escalation_topic_arn" {
+  type        = string
+  default     = null
+  description = "Existing operator-owned SNS topic in this account and Region, separate from the account notification topic"
+}

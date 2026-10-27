@@ -20,6 +20,14 @@ module "account" {
         resource_ids         = ["arn:aws:s3:::${var.bucket_name}"]
         owner                = "example-security-operations"
         runbook_url          = "https://example.com/runbooks/s3-public-access"
+        escalation_topic_arn = var.security_escalation_topic_arn
+        safety = {
+          idempotency_mode     = "IDEMPOTENT"
+          revalidates_scope    = true
+          verifies_result      = true
+          failure_behavior     = "ESCALATE_AND_MANUAL_ROLLBACK"
+          rollback_runbook_url = "https://example.com/runbooks/s3-public-access-rollback"
+        }
       }
     }
   }

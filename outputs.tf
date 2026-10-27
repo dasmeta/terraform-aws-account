@@ -52,8 +52,17 @@ output "security_hub_remediation_routes" {
         for metric in ["ExecutionsFailed", "ExecutionsTimedOut", "ExecutionsAborted"] :
         metric => aws_cloudwatch_metric_alarm.security_hub_remediation_execution_failed["${name}-${metric}"].arn
       }
-      owner       = workflow.owner
-      runbook_url = workflow.runbook_url
+      delivery_failure_alarm_arns = merge(
+        { queue_nonempty = aws_cloudwatch_metric_alarm.security_hub_remediation_queue_nonempty[name].arn },
+        {
+          for pair in setproduct(["finding", "failure"], ["InvocationsSentToDlq", "InvocationsFailedToBeSentToDlq"]) :
+          "${pair[0]}-${pair[1]}" => aws_cloudwatch_metric_alarm.security_hub_remediation_delivery_metric["${name}-${pair[0]}-${pair[1]}"].arn
+        }
+      )
+      escalation_topic_arn = workflow.escalation_topic_arn
+      owner                = workflow.owner
+      runbook_url          = workflow.runbook_url
+      safety               = workflow.safety
     }
   }
 }
