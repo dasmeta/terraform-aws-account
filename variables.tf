@@ -704,7 +704,32 @@ variable "security_hub" {
         })
       })), {})
     }), {})
+    remediation_workflows = optional(map(object({  # Named, opt-in corrective workflows for approved Security Hub controls and resources
+      enabled              = optional(bool, false) # Start the workflow only when explicitly enabled
+      state_machine_arn    = string                # ARN of an approved STANDARD Step Functions state machine in this account and Region
+      security_control_ids = set(string)           # Exact Security Hub control IDs such as S3.8
+      resource_ids         = set(string)           # Exact ASFF Resources.Id values that may trigger this workflow
+      owner                = string                # Team or role accountable for this corrective workflow
+      runbook_url          = string                # HTTPS procedure describing approval, safety checks, and rollback
+    })), {})
   })
   default     = {}
-  description = "AWS Security Hub configuration with submodules (Config, Inspector, GuardDuty, Macie) and alarm actions for findings notifications"
+  description = "AWS Security Hub configuration with Config, Inspector, GuardDuty, Macie, alerting, and optional bounded corrective workflow routes"
+
+  validation {
+    condition = alltrue([
+      for name, workflow in var.security_hub.remediation_workflows : !workflow.enabled || (
+        can(regex("^[A-Za-z0-9_-]{1,24}$", name)) &&
+        length(var.security_hub.name) + length(name) <= 44 &&
+        can(regex("^arn:aws(-us-gov|-cn)?:states:[a-z0-9-]+:[0-9]{12}:stateMachine:[A-Za-z0-9_-]+$", workflow.state_machine_arn)) &&
+        length(workflow.security_control_ids) > 0 &&
+        alltrue([for control in workflow.security_control_ids : can(regex("^[A-Za-z0-9]+[.][0-9]+$", control))]) &&
+        length(workflow.resource_ids) > 0 &&
+        alltrue([for resource in workflow.resource_ids : can(regex("^arn:", resource)) && !can(regex("[*?]", resource))]) &&
+        trimspace(workflow.owner) != "" &&
+        can(regex("^https://[^ ]+$", workflow.runbook_url))
+      )
+    ])
+    error_message = "Enabled remediation workflows require a short name, exact Standard state-machine ARN, nonempty exact control/resource IDs, an owner, and an HTTPS runbook. Wildcards are not allowed."
+  }
 }

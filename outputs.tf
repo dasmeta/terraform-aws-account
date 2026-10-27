@@ -38,3 +38,33 @@ output "account_events_export" {
     }
   } : null
 }
+
+output "security_hub_remediation_routes" {
+  description = "Configured corrective route and failed-delivery identifiers; does not prove successful correction"
+  value = {
+    for name, workflow in local.enabled_security_hub_remediation_workflows : name => {
+      finding_rule_arn          = aws_cloudwatch_event_rule.security_hub_remediation[name].arn
+      failed_execution_rule_arn = aws_cloudwatch_event_rule.security_hub_remediation_failed[name].arn
+      state_machine_arn         = workflow.state_machine_arn
+      failed_delivery_queue_arn = aws_sqs_queue.security_hub_remediation_failed_delivery[name].arn
+      failed_delivery_queue_url = aws_sqs_queue.security_hub_remediation_failed_delivery[name].url
+      execution_failure_alarm_arns = {
+        for metric in ["ExecutionsFailed", "ExecutionsTimedOut", "ExecutionsAborted"] :
+        metric => aws_cloudwatch_metric_alarm.security_hub_remediation_execution_failed["${name}-${metric}"].arn
+      }
+      owner       = workflow.owner
+      runbook_url = workflow.runbook_url
+    }
+  }
+}
+
+output "security_hub_alerting_route" {
+  description = "Configured automatic finding route and topic name; live delivery and acknowledgement require separate evidence"
+  value = var.security_hub.enabled ? {
+    enabled                    = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
+    notification_topic_name    = local.security_hub_notification_topic_name
+    reuses_account_topic       = local.security_hub_reuses_account_topic
+    automatic_eventbridge_rule = module.monitoring_security_hub[0].eventbridge_rule_arn
+    manual_action_target_arn   = module.monitoring_security_hub[0].security_hub_action_target_arn
+  } : null
+}
