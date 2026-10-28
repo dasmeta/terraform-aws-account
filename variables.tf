@@ -127,9 +127,16 @@ variable "alarm_actions" {
       notification_type      = optional(string, "ACTUAL")                                     # Notification type: ACTUAL or FORECASTED
       notify_email_addresses = optional(list(string), [])                                     # List of email addresses to receive billing alarm notifications
     }), { enabled : false })
-    security_hub_alarms = optional(object({                           # Allows to enable security hub alarm actions, by default it will use account level sns topic for security hub alarms, if you want to use custom alarm actions, you can set use_account_topic to false and set custom_alarm_actions to a map of alarm actions or a list of alarm actions
-      enabled           = optional(bool, false)                       # whether to enable security hub alarm actions, if false, will not create any alarm actions
-      use_account_topic = optional(bool, true)                        # whether to use account level sns topic(and notification channels) for security hub alarms, if false, will create separate sns topic for it
+    security_hub_alarms = optional(object({     # Allows to enable security hub alarm actions, by default it will use account level sns topic for security hub alarms, if you want to use custom alarm actions, you can set use_account_topic to false and set custom_alarm_actions to a map of alarm actions or a list of alarm actions
+      enabled           = optional(bool, false) # whether to enable security hub alarm actions, if false, will not create any alarm actions
+      use_account_topic = optional(bool, true)  # whether to use account level sns topic(and notification channels) for security hub alarms, if false, will create separate sns topic for it
+      dedicated_route = optional(object({       # Opt-in security-only SNS topic with a Slack channel and retained on-call webhook; overrides use_account_topic
+        topic_name          = string            # Unique SNS topic name, different from the account alarm topic
+        owner               = string            # Team accountable for normal Security Hub finding notifications
+        slack_channel       = string            # Security Slack channel name without a leading #
+        slack_webhook_url   = string            # Incoming webhook bound to the security Slack channel
+        on_call_webhook_url = string            # Existing owned incident-management webhook for acknowledgement
+      }), null)
       custom_alarm_actions = optional(object({                        # custom alarm actions to be used for security hub alarms, this get enabled when security_hub_alarms.enabled is true and security_hub_alarms.use_account_topic is false
         topic_name                       = optional(string, "")       # Takes affect if use_account_topic is false. SNS topic name. If empty and create_topic=false, will use existing topic from alarm_actions module
         create_topic                     = optional(bool, true)       # Takes affect if use_account_topic is false. Whether to create a new SNS topic. Set to false to reuse existing topic from alarm_actions module
@@ -178,6 +185,25 @@ variable "alarm_actions" {
 
   default     = { enabled = false, billing_alarm = { enabled : false }, security_hub_alarms = { enabled : false } }
   description = "Whether to enable/create regional(TODO: add also us-east-1 region alarm also for health-check alarms) SNS topic/subscribers"
+
+  validation {
+    condition = var.alarm_actions.security_hub_alarms.dedicated_route == null ? true : (
+      try(trimspace(var.alarm_actions.security_hub_alarms.dedicated_route.owner), "") != "" &&
+      can(regex("^[A-Za-z0-9_-]{1,256}$", try(var.alarm_actions.security_hub_alarms.dedicated_route.topic_name, ""))) &&
+      try(var.alarm_actions.security_hub_alarms.dedicated_route.topic_name, "") != var.alarm_actions.topic_name &&
+      can(regex("^[a-z0-9][a-z0-9_-]*$", try(var.alarm_actions.security_hub_alarms.dedicated_route.slack_channel, ""))) &&
+      can(regex("^https://[^ ]+$", try(var.alarm_actions.security_hub_alarms.dedicated_route.slack_webhook_url, ""))) &&
+      can(regex("^https://[^ ]+$", try(var.alarm_actions.security_hub_alarms.dedicated_route.on_call_webhook_url, ""))) &&
+      try(var.alarm_actions.security_hub_alarms.dedicated_route.slack_webhook_url, "") != try(var.alarm_actions.security_hub_alarms.dedicated_route.on_call_webhook_url, "") &&
+      alltrue([for hook in var.alarm_actions.slack_webhooks : hook.hook_url != try(var.alarm_actions.security_hub_alarms.dedicated_route.slack_webhook_url, "") && hook.channel != try(var.alarm_actions.security_hub_alarms.dedicated_route.slack_channel, "")]) &&
+      var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name == "" &&
+      var.alarm_actions.security_hub_alarms.custom_alarm_actions.create_topic &&
+      var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_assign_security_hub_policy &&
+      length(var.alarm_actions.security_hub_alarms.custom_alarm_actions.slack_webhooks) == 0 &&
+      length(var.alarm_actions.security_hub_alarms.custom_alarm_actions.web_endpoints) == 0
+    )
+    error_message = "security_hub_alarms.dedicated_route requires a distinct topic, owner, security Slack channel/webhook, and HTTPS on-call webhook; do not mix its topic or endpoints with custom_alarm_actions or the account Slack route."
+  }
 }
 
 variable "alarm_actions_virginia" { # TODO: it seems we can combine alarm_actions_virginia into alarm_actions so that we will have one source of config, as we usually have same channels for alarm in both primary and virginia regions

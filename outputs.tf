@@ -70,9 +70,13 @@ output "security_hub_remediation_routes" {
 output "security_hub_alerting_route" {
   description = "Configured automatic finding route and topic name; live delivery and acknowledgement require separate evidence"
   value = var.security_hub.enabled ? {
-    enabled                     = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
-    notification_topic_name     = local.security_hub_notification_topic_name
-    reuses_account_topic        = local.security_hub_reuses_account_topic
+    enabled                 = nonsensitive(var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled)
+    notification_topic_name = nonsensitive(local.security_hub_notification_topic_name)
+    reuses_account_topic    = nonsensitive(local.security_hub_reuses_account_topic)
+    security_channel = nonsensitive(local.security_hub_dedicated_route == null ? null : {
+      owner         = local.security_hub_dedicated_route.owner
+      slack_channel = local.security_hub_dedicated_route.slack_channel
+    })
     automatic_eventbridge_rule  = module.monitoring_security_hub[0].eventbridge_rule_arn
     manual_action_target_arn    = module.monitoring_security_hub[0].security_hub_action_target_arn
     manual_eventbridge_rule_arn = module.monitoring_security_hub[0].manual_eventbridge_rule_arn
