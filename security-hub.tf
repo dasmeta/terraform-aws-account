@@ -2,22 +2,45 @@
 # This module sets up Security Hub with submodules (Config, Inspector, GuardDuty, Macie)
 # and integrates with alarm actions for findings notifications
 locals {
+  security_hub_dedicated_route = var.alarm_actions.security_hub_alarms.dedicated_route
   security_hub_reuses_account_topic = (
-    var.alarm_actions.security_hub_alarms.use_account_topic ||
-    var.alarm_actions.topic_name == var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name
+    local.security_hub_dedicated_route == null && (
+      var.alarm_actions.security_hub_alarms.use_account_topic ||
+      var.alarm_actions.topic_name == var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name
+    )
   )
-  security_hub_notification_topic_name = local.security_hub_reuses_account_topic ? (
+  security_hub_notification_topic_name = local.security_hub_dedicated_route != null ? (
+    local.security_hub_dedicated_route.topic_name
+    ) : local.security_hub_reuses_account_topic ? (
     var.alarm_actions.topic_name
     ) : (
     var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name != "" ?
     var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_name :
     "${var.security_hub.name}-security-hub-findings"
   )
+  security_hub_alarm_actions = merge(
+    {
+      enabled = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
+    },
+    var.alarm_actions.security_hub_alarms.custom_alarm_actions,
+    {
+      create_topic                     = local.security_hub_dedicated_route != null ? true : local.security_hub_reuses_account_topic ? false : var.alarm_actions.security_hub_alarms.custom_alarm_actions.create_topic
+      topic_name                       = local.security_hub_notification_topic_name
+      topic_assign_security_hub_policy = local.security_hub_dedicated_route != null ? true : local.security_hub_reuses_account_topic ? false : var.alarm_actions.security_hub_alarms.custom_alarm_actions.topic_assign_security_hub_policy
+      enable_dead_letter_queue         = local.security_hub_reuses_account_topic ? false : var.alarm_actions.security_hub_alarms.custom_alarm_actions.enable_dead_letter_queue
+      slack_webhooks = local.security_hub_dedicated_route != null ? [{
+        hook_url = try(local.security_hub_dedicated_route.slack_webhook_url, "")
+        channel  = try(local.security_hub_dedicated_route.slack_channel, "")
+        username = "security-hub"
+      }] : var.alarm_actions.security_hub_alarms.custom_alarm_actions.slack_webhooks
+      web_endpoints = local.security_hub_dedicated_route != null ? [try(local.security_hub_dedicated_route.on_call_webhook_url, "")] : var.alarm_actions.security_hub_alarms.custom_alarm_actions.web_endpoints
+    }
+  )
 }
 
 module "monitoring_security_hub" {
-  source  = "dasmeta/monitoring/aws//modules/security-hub"
-  version = "3.0.0"
+  # Temporary immutable dependency until monitoring PR #106 is released.
+  source = "git::https://github.com/dasmeta/terraform-aws-monitoring.git//modules/security-hub?ref=c49d6f78c56a608dfed28e249f0519d817164030"
 
   count = var.security_hub.enabled ? 1 : 0
 
@@ -45,18 +68,7 @@ module "monitoring_security_hub" {
   macie = var.security_hub.macie
 
   # Alarm actions for security hub findings
-  alarm_actions = merge(
-    {
-      enabled = var.alarm_actions.enabled && var.alarm_actions.security_hub_alarms.enabled
-    },
-    var.alarm_actions.security_hub_alarms.custom_alarm_actions,
-    local.security_hub_reuses_account_topic ? {
-      create_topic                     = false
-      topic_name                       = var.alarm_actions.topic_name
-      enable_dead_letter_queue         = false
-      topic_assign_security_hub_policy = false
-    } : {}
-  )
+  alarm_actions = local.security_hub_alarm_actions
 
   delivery_failure = var.security_hub.delivery_failure
 
