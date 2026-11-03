@@ -181,9 +181,14 @@ module "event_bridge" {
 
   rules = {
     (var.name) = {
-      description   = "Capture important AWS account events and buffer them for webhook export"
-      event_pattern = jsonencode({ "source" : var.event_bridge_bus.rule_pattern_source })
-      enabled       = true
+      description = "Capture important AWS account events and buffer them for webhook export"
+      event_pattern = jsonencode(merge(
+        { source = var.event_bridge_bus.rule_pattern_source },
+        length(var.event_bridge_bus.excluded_detail_types) == 0 ? {} : {
+          "detail-type" = [{ "anything-but" = var.event_bridge_bus.excluded_detail_types }]
+        }
+      ))
+      enabled = true
     }
   }
 
