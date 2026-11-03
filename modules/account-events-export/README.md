@@ -9,6 +9,22 @@ module "this" {
   webhook_endpoint = "https://example-webhook-endpoint.com"
 }
 ```
+
+## Excluding high-volume event types
+
+`event_bridge_bus.excluded_detail_types` prevents selected event types from entering the delivery queue. The default is an empty list, so existing clients keep their current event stream. For clients that route Security Hub findings through a dedicated notification module, the account event exporter can omit the duplicate finding feed:
+
+```hcl
+event_bridge_bus = {
+  excluded_detail_types = [
+    "Security Hub Findings - Imported",
+    "Findings Imported V2",
+  ]
+}
+```
+
+This retains other Security Hub event types and all other configured sources. Excluded events are not delivered to this exporter's webhook; configure a separate findings route before enabling this filter. The webhook still receives one event per request, with the same payload and retry behavior.
+
 ## The webhook endpoint receives POST requests in following form(this example os from "aws.rds" service auto scale event)
 ```json
 {
