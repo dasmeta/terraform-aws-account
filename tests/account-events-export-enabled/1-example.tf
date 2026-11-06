@@ -9,9 +9,10 @@ module "this" {
     enabled          = true
     webhook_endpoint = "https://n8n.example.com/webhook/uuid?accountId=000000000000"
     delivery = {
-      maximum_concurrency     = 3
-      webhook_timeout_seconds = 8
-      lambda_timeout_seconds  = 12
+      maximum_concurrency                  = 3
+      webhook_timeout_seconds              = 8
+      lambda_timeout_seconds               = 12
+      oldest_message_age_threshold_seconds = 600
     }
   }
 
