@@ -19,6 +19,13 @@ module "account" {
   we have improvements in security-hub enable and notification channels configuration,
   there is new variable named `security_hub`, which allows to enable security hub and with `alarm_actions.security_hub_alarms` variable we configure security-hub notification, by default the notifications go through account level configured channels, but it is possible to enable custom notification channels via custom sns topic, more info/example can be fount in test/example from ./tests/security-hub-findings-to-slack folder
   with the new version we also added support for terraform provider 6.x
+
+## Account-event delivery backlog alarm
+
+`account_events_export.delivery.oldest_message_age_threshold_seconds` controls the
+oldest-message-age alarm for the primary delivery queue. It defaults to `300` seconds
+to preserve existing behavior. Set a value between 60 seconds and the queue retention
+period when a longer, intentional backlog tolerance is appropriate.
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 

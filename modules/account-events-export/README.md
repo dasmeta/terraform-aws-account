@@ -7,8 +7,16 @@ module "this" {
   version = "1.3.6"
 
   webhook_endpoint = "https://example-webhook-endpoint.com"
+
+  delivery = {
+    oldest_message_age_threshold_seconds = 600
+  }
 }
 ```
+
+`delivery.oldest_message_age_threshold_seconds` defaults to `300` seconds and controls
+the oldest-message-age alarm for the primary delivery queue. The value must be at least
+60 seconds and no greater than the delivery queue retention period.
 ## The webhook endpoint receives POST requests in following form(this example os from "aws.rds" service auto scale event)
 ```json
 {

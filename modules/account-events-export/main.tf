@@ -85,7 +85,7 @@ resource "aws_cloudwatch_metric_alarm" "event_queue_oldest_message_age" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   datapoints_to_alarm = 1
-  threshold           = 300
+  threshold           = var.delivery.oldest_message_age_threshold_seconds
 
   namespace   = "AWS/SQS"
   metric_name = "ApproximateAgeOfOldestMessage"

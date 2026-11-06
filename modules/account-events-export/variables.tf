@@ -34,12 +34,13 @@ variable "dlq_alarm_actions" {
 
 variable "delivery" {
   type = object({
-    maximum_concurrency       = optional(number, 2)
-    webhook_timeout_seconds   = optional(number, 10)
-    lambda_timeout_seconds    = optional(number, 15)
-    message_retention_seconds = optional(number, 1209600)
-    dlq_retention_seconds     = optional(number, 1209600)
-    max_receive_count         = optional(number, 100) # about 2.5 hours with the default 90-second visibility timeout
+    maximum_concurrency                  = optional(number, 2)       # Maximum concurrent webhook-delivery Lambda invocations.
+    webhook_timeout_seconds              = optional(number, 10)      # Per-request timeout for the webhook receiver.
+    lambda_timeout_seconds               = optional(number, 15)      # Maximum runtime for each delivery Lambda invocation.
+    message_retention_seconds            = optional(number, 1209600) # Retention period for queued delivery events.
+    dlq_retention_seconds                = optional(number, 1209600) # Retention period for delivery failures in the dead-letter queue.
+    max_receive_count                    = optional(number, 100)     # Delivery attempts before an event moves to the dead-letter queue.
+    oldest_message_age_threshold_seconds = optional(number, 300)     # Queue age that triggers the primary delivery backlog alarm.
   })
   default     = {}
   description = "Buffered webhook delivery limits and failure retention"
@@ -67,5 +68,10 @@ variable "delivery" {
   validation {
     condition     = var.delivery.max_receive_count >= 5 && var.delivery.max_receive_count <= 1000
     error_message = "delivery.max_receive_count must be between 5 and 1000."
+  }
+
+  validation {
+    condition     = var.delivery.oldest_message_age_threshold_seconds >= 60 && var.delivery.oldest_message_age_threshold_seconds <= var.delivery.message_retention_seconds
+    error_message = "delivery.oldest_message_age_threshold_seconds must be at least 60 seconds and no greater than delivery.message_retention_seconds."
   }
 }
